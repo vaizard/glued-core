@@ -1,0 +1,55 @@
+---
+routes:
+
+    #########################################################
+    # SKELETON / NODES                                      #
+    #########################################################
+
+    be_skeleton:
+        service:    skeleton
+        path:       /api/skeleton
+        pattern:    /api/skeleton
+        label:      Skeleton
+        icon:       GiSkeleton
+        dscr:       A routegroup, no methods here.
+
+    #########################################################
+    # SKELETON / HEALTH                                     #
+    #########################################################
+
+    be_skeleton_health_v1:
+        pattern:    ${routes.be_skeleton.path}/health/v1
+        path:       ${routes.be_skeleton.path}/health/v1
+        label:      Skeleton health
+        dscr:       A healthcheck endpoint for the microservice.
+        icon:       FaHeartbeat
+        service:    skeleton
+        provides:   health
+        methods:
+            get:    Glued\Controllers\ServiceController:health
+
+    #########################################################
+    # SKELETON / ROUTES                                     #
+    #########################################################
+
+    be_skeleton_routes_list_v1:
+        pattern:    ${routes.be_skeleton.path}/routes/list/v1
+        path:       ${routes.be_skeleton.path}/routes/list/v1
+        label:      Skeleton routes list
+        dscr:       A route list endpoint for the microservice.
+        icon:       SiReactrouter
+        service:    skeleton
+        provides:   routes_list
+        methods:
+            get:    Glued\Controllers\ServiceController:routes_list
+    be_skeleton_routes_tree_v1:
+        pattern:    ${routes.be_skeleton.path}/routes/tree/v1
+        path:       ${routes.be_skeleton.path}/routes/tree/v1
+        label:      Skeleton routes tree - ${routes.host}
+        dscr:       A route tree endpoint for the microservice.
+        icon:       SiReactrouter
+        service:    skeleton
+        provides:   routes_tree
+        methods:
+            get:    Glued\Controllers\ServiceController:routes_tree
+

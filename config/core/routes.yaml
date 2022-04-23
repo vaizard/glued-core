@@ -1,0 +1,225 @@
+---
+routes:
+
+    #########################################################
+    # CORE / NODES                                          #
+    #########################################################
+
+    fe_core_root:
+        pattern:    /
+        path:       /
+        label:      Home
+        icon:       FaHeartbeat
+        dscr:       Root ingress point for glued, provides UI.
+        service:    core
+        methods:
+            get:    Glued\Controllers\FeController:render_ui
+    be_core:
+        service:    core
+        pattern:    /api/core
+        path:       /api/core
+        label:      Core
+        icon:       GiPlanetCore
+        dscr:       A routegroup, no methods here.
+
+    #########################################################
+    # CORE / STATUS                                         #
+    #########################################################
+    
+    fe_core_status_phpinfo:
+        pattern:    /core/status/phpinfo
+        path:       /core/status/phpinfo
+        label:      Phpinfo()
+        icon:       SiPhp
+        dscr:       Returns phpinfo().
+        methods:
+            get:    Glued\Controllers\FeController:render_phpinfo
+            post:   Glued\Controllers\FeController:render_phpinfo
+    be_core_status_phpconst_v1:
+        pattern:    ${routes.be_core.path}/status/phpconst/v1
+        path:       ${routes.be_core.path}/status/phpconst/v1
+        label:      Phpconst()
+        dscr:       Returns phpconst().
+        icon:       SiPhp
+        methods:
+            get:    Glued\Controllers\StatusController:phpconst
+    be_core_status_jwt_fetch_v1:
+        pattern:    ${routes.be_core.path}/status/jwt/fetch/v1
+        path:       ${routes.be_core.path}/status/jwt/fetch/v1
+        label:      Show JWT
+        dscr:       Returns the (undecoded) JWT token provided by client.
+        icon:       FaPassport
+        service:    core
+        methods:
+            get:    Glued\Controllers\StatusController:token_fetch
+    be_core_status_jwt_decode_v1:
+        pattern:    ${routes.be_core.path}/status/jwt/decode/v1
+        path:       ${routes.be_core.path}/status/jwt/decode/v1
+        label:      Decode JWT
+        dscr:       Returns the decoded JWT token provided by client.
+        icon:       FaPassport
+        service:    core
+        methods:
+            get:    Glued\Controllers\StatusController:token_decode
+    be_core_status_request_v1:
+        pattern:    ${routes.be_core.path}/status/request/v1
+        path:       ${routes.be_core.path}/status/request/v1
+        label:      Show request headers
+        dscr:       Returns the client's request geaders.
+        icon:       MdHttp
+        service:    core
+        methods:
+            get:    Glued\Controllers\AdmController:reflect_request
+    be_core_status_sysinfo_v1:
+        pattern:    ${routes.be_core.path}/status/sysinfo/v1
+        path:       ${routes.be_core.path}/status/sysinfo/v1
+        label:      Sysinfo
+        dscr:       Returns /proc information from the host.
+        icon:       ImStatsBars2
+        service:    core
+        methods:
+            get:    Glued\Controllers\AdmController:sysinfo
+    be_core_status_config_v1:
+        pattern:    ${routes.be_core.path}/status/config/v1
+        path:       ${routes.be_core.path}/status/config/v1
+        label:      Glued Config
+        dscr:       Returns Glued configuration.
+        icon:       MdHttp
+        service:    core
+        methods:
+            get:    Glued\Controllers\StatusController:config
+
+    #########################################################
+    # CORE / AUTH                                           #
+    #########################################################
+
+    be_core_auth_test_pass_v1:
+        pattern:    ${routes.be_core.path}/auth/test/pass/v1
+        path:       ${routes.be_core.path}/auth/test/pass/v1
+        label:      "Authorization test: Pass"
+        dscr:       Always returns a 200 respnse code. Intended for testing the nginx auth_request_module.
+        icon:       BiCheckShield
+        service:    core
+        methods:
+            get:    Glued\Controllers\AuthController:say_pass
+    be_core_auth_test_fail_v1:
+        pattern:    ${routes.be_core.path}/auth/test/fail/v1
+        path:       ${routes.be_core.path}/auth/test/fail/v1
+        label:      "Authorization test: Fail"
+        dscr:       Always returns a 403 respnse code. Intended for testing the nginx auth_request_module.
+        icon:       BiCheckShieldX
+        service:    core
+        methods:
+            get:    Glued\Controllers\AuthController:say_fail
+    be_core_auth_enforce_v1:
+        pattern:    ${routes.be_core.path}/auth/enforce/v1
+        path:       ${routes.be_core.path}/auth/enforce/v1
+        label:      Authorization enforcer
+        dscr:       Authorizes user for the action (crud) on a resource (uri). Returns 200 or 403 as expected by the nginx auth_request_module.
+        icon:       FaUserLock
+        service:    core
+        methods:
+            get:    Glued\Controllers\AuthController:enforce
+    be_core_auth_users_v1:
+        pattern:    ${routes.be_core.path}/auth/users/v1
+        path:       ${routes.be_core.path}/auth/users/v1
+        label:      Manage users
+        dscr:       Api endpoint for managing users.
+        icon:       FaUserLock
+        service:    core
+        methods:
+            get:    Glued\Controllers\ServiceController:stub
+    be_core_auth_domains_v1:
+        pattern:    ${routes.be_core.path}/auth/domains/v1
+        path:       ${routes.be_core.path}/auth/domains/v1
+        label:      Manage domains
+        dscr:       Api endpoint for managing domains.
+        icon:       FaUserLock
+        service:    core
+        methods:
+            get:    Glued\Controllers\ServiceController:stub
+    be_internal_core_auth_enforce_v1:
+        pattern:    /internal/auth/enforce/v1
+        path:       /internal/auth/enforce/v1
+        label:      Authorization enforcer
+        dscr:       Internal route handled nginx (hits be_core_auth_enforce_v1). Route method is a stub that will invoke only when nginx is misconfigured.
+        icon:       FaUserLock
+        service:    core
+        methods:
+            get:    Glued\Controllers\ServiceController:stub
+    fe_core_auth_callback:
+        pattern:    /auth/signin
+        path:       /auth/signin
+        label:      Signin
+        dscr:       (Re)authenticates user against Keycloak.
+        icon:       FaUserLock
+        service:    core
+        methods:
+            get:    Glued\Controllers\ServiceController:stub
+    fe_core_auth_signout:
+        pattern:    /auth/signout
+        path:       /auth/signout
+        label:      Signout
+        dscr:       Signs user out.
+        icon:       FaUserLock
+        service:    core
+        methods:
+            get:    Glued\Controllers\ServiceController:stub
+    fe_core_auth_users:
+        pattern:    /auth/users
+        path:       /auth/users
+        label:      Manage users
+        dscr:       Frontend for managing users.
+        icon:       FaUserLock
+        service:    core
+        methods:
+            get:    Glued\Controllers\ServiceController:stub
+    fe_core_auth_domains:
+        pattern:    /auth/domains
+        path:       /auth/domains
+        label:      Manage domains
+        dscr:       Frontend for managing domains.
+        icon:       FaUserLock
+        service:    core
+        methods:
+            get:    Glued\Controllers\ServiceController:stub
+
+    #########################################################
+    # CORE / HEALTH                                         #
+    #########################################################
+
+    be_core_health_v1:
+        pattern:    ${routes.be_core.path}/health/v1
+        path:       ${routes.be_core.path}/health/v1
+        label:      Skeleton health
+        dscr:       A healthcheck endpoint for the microservice.
+        icon:       FaHeartbeat
+        service:    skeleton
+        provides:   health
+        methods:
+            get:    Glued\Controllers\ServiceController:health
+
+    #########################################################
+    # CORE / ROUTES                                         #
+    #########################################################
+
+    be_core_routes_list_v1:
+        pattern:    ${routes.be_core.path}/routes/list/v1
+        path:       ${routes.be_core.path}/routes/list/v1
+        label:      Skeleton routes list
+        dscr:       A route list endpoint for the microservice.
+        icon:       SiReactrouter
+        service:    skeleton
+        provides:   routes_list
+        methods:
+            get:    Glued\Controllers\ServiceController:routes_list
+    be_core_routes_tree_v1:
+        pattern:    ${routes.be_core.path}/routes/tree/v1
+        path:       ${routes.be_core.path}/routes/tree/v1
+        label:      Skeleton routes tree
+        dscr:       A route tree endpoint for the microservice.
+        icon:       SiReactrouter
+        service:    skeleton
+        provides:   routes_tree
+        methods:
+            get:    Glued\Controllers\ServiceController:routes_tree

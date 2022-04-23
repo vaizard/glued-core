@@ -1,24 +1,23 @@
-# Composer files
+.DS_Store
+.env
+.idea
+.tmp
+composer.lock
 composer.phar
+coverage
+config/config.d/**
+public/assets/node_modules/**
+public/db/**
+public/assets/cache/**
+phinx.yml
+private/apikeys/**
+private/backups/**
+private/cache/**
+private/crypto/**
+private/data/**
+private/log/**
 vendor/
-
-# Local configs
-config/autoload/*.local.php
-
-# Binary gettext files
+yarn.lock
+yarn-error.log
+*~
 *.mo
-
-# Data
-data/logs/
-data/cache/
-data/sessions/
-data/tmp/
-temp/
-
-#Doctrine 2
-data/DoctrineORMModule/Proxy/
-data/DoctrineORMModule/cache/
-
-# Legacy ZF1
-demos/
-extras/documentation
