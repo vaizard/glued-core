@@ -1,0 +1,68 @@
+##
+# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
+##
+
+include snippets/upstream/*.conf;
+
+
+server {
+        ##########################
+        # Server setup           #
+        ##########################
+
+        root /var/www/html/glued-core/public;
+        listen 443 ssl http2 default_server;
+        listen [::]:443 ssl http2 default_server;
+        include snippets/server/common.conf;
+
+        ##########################
+        # Core/ingress setup     #
+        ##########################
+
+        include snippets/server/gzip.conf;
+        include snippets/server/headers.conf;
+
+        ##########################
+        # Path locations         #
+        ##########################
+
+        # Main locations
+        include snippets/common/location-main.conf;
+
+        # Auth test location before php match
+        location /api/core/auth/test/ {
+                auth_request /backend/auth;
+                auth_request_set $auth_status $upstream_status;
+                try_files $uri $uri/ /index.php$is_args$args;
+        }
+
+        ##########################
+        # PHP location match     #
+        ##########################
+
+        include snippets/common/location-php.conf;
+
+        ##########################
+        # Exact locations        #
+        ##########################
+
+        location = /backend/auth {
+            #internal;
+            proxy_pass                 https://127.0.0.1/api/core/auth/enforce/v1;
+            proxy_set_header Host      $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_pass_request_body    off;
+            proxy_set_header           Content-Length "";
+            proxy_set_header           X-Original-URI $request_uri;
+            proxy_ssl_protocols        TLSv1.3;
+        }
+
+        include snippets/location/*;
+
+        ##########################
+        # Deny location match    #
+        ##########################
+
+        include snippets/common/location-deny.conf;
+}
+

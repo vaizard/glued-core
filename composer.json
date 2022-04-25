@@ -98,6 +98,11 @@
       "Glued\\Config\\ComposerHooks::configTool",
       "composer migrate"
     ],
+    "nginx": [
+      "cp -r glued/Config/Nginx/* /etc/nginx",
+      "ln -s /etc/nginx/sites-available/$(basename `pwd`) /etc/nginx/sites-enabled",
+      "systemctl reload nginx"
+    ],
     "migrate": [
       "for dir in $(find ./glued/Config/Migrations -not -empty -type d) ; do dbmate -d \"${dir}\" -s './private/install/schema.sql' migrate; done;"
     ],
