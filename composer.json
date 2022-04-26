@@ -87,7 +87,7 @@
     "post-install-cmd": [
     ],
     "post-update-cmd": [
-      "test -n \"$GLUED_IN_DOCKER\" || composer configure < /dev/tty"
+      "composer configure"
     ],
     "backup": [
       "mkdir -p private/backups/db",

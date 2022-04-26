@@ -21,9 +21,6 @@ class ComposerHooks
         echo "++++++ STARTING THE COFIGURATION TESTING AND SETUP TOOL" . PHP_EOL . PHP_EOL;
         // get access to the current Composer instance
         $composer = $event->getComposer();
-        // get access to the current ComposerIOConsoleIO
-        // stream for terminal input/output
-        $io = $event->getIO();
         //$crypto = new Crypto;
         define("__ROOT__", getcwd());
 
