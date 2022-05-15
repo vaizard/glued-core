@@ -88,37 +88,32 @@ class StatusController extends AbstractController
      * @return Response Json result set.
      */
     public function token_decode(Request $request, Response $response, array $args = []): Response {
-       try {
-            // Get oidc config, jwk signing keys and the access token
-            $oidc = $this->settings['oidc'];
-            $certs = $this->auth->get_jwks($oidc);
-            $accesstoken = $this->auth->fetch_token($request);
-          
-            // Authenticate user. Exceptions (i.e. invalid jwt, database 
-            // errors etc.) are handled by the catch below.
-            try {
-                $jwt = Load::jws($accesstoken)   // Load and verify the token in $accesstoken
-                    ->algs(['RS256', 'RS512'])   // Check if allowed The algorithms are used
-                    ->exp()                      // Check if "exp" claim is present
-                    ->iat(1000)                  // Check if "iat" claim is present and within 1000ms leeway
-                    ->nbf(1000)                  // Check if "nbf" claim is present and within 1000ms leeway
-                    ->iss($oidc['uri']['realm']) // Check if "nbf" claim is present and matches the realm
-                    ->keyset(new JWKSet($certs)) // Key used to verify the signature
-                    ->run();                     // Do it.
-                $jwt_claims = $jwt->claims->all() ?? [];
-                $jwt_header = $jwt->header->all() ?? [];
-            } catch (\Exception $e) { throw new AuthJwtException($e->getMessage(), $e->getCode(), $e); }
-        } 
-        catch (AuthJwtException | AuthTokenException $e) {
-            $jwt_claims['error'] = $e->getMessage();
-            $jwt_claims['message'] = "Login at ".$oidc['uri']['login'];
-        }
-        catch (AuthOidcException $e) { echo $e->getMessage(); die(); }
-        catch (DbException $e) { echo $e->getMessage(); die(); }
-        catch (TransformException $e) { echo $e->getMessage(); die(); }
-        catch (\Exception $e) { echo 'x'.$e->getMessage(); die(); }
-        return $response->withJson($jwt_claims);
+        // Get oidc config, jwk signing keys and the access token
+        $oidc = $this->settings['oidc'];
+        $certs = $this->auth->get_jwks($oidc);
+        $accesstoken = $this->auth->fetch_token($request);
+        $arr = $this->auth->decode_token($accesstoken, $certs);
+        return $response->withJson($arr);
     }
+
+    /**
+     * Decodes user's jwt token.
+     * @param  Request  $request  
+     * @param  Response $response 
+     * @param  array    $args     
+     * @return Response Json result set.
+     */
+    public function auth(Request $request, Response $response, array $args = []): Response {
+        // Get oidc config, jwk signing keys and the access token
+        
+        $oidc = $this->settings['oidc'];
+        $certs = $this->auth->get_jwks($oidc);
+        $accesstoken = $this->auth->fetch_token($request);
+        $arr = $this->auth->decode_token($accesstoken, $certs);
+        $arr['users'] = $this->auth->users();
+        return $response->withJson($arr);
+    }
+
 
     /**
      * Reflects a client request.

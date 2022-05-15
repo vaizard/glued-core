@@ -8,7 +8,7 @@ use Facile\OpenIDClient\Client\ClientBuilder;
 use Facile\OpenIDClient\Client\Metadata\ClientMetadata;
 use Facile\OpenIDClient\Issuer\IssuerBuilder;
 use Facile\OpenIDClient\Service\Builder\AuthorizationServiceBuilder;
-use Glued\Classes\Auth\Auth;
+use Glued\Lib\Auth;
 use Glued\Lib\Utils;
 use Goutte\Client;
 use GuzzleHttp\Client as Guzzle;

@@ -61,6 +61,15 @@ routes:
         service:    core
         methods:
             get:    Glued\Controllers\StatusController:token_decode
+    be_core_status_auth_v1:
+        pattern:    ${routes.be_core.path}/status/auth/v1
+        path:       ${routes.be_core.path}/status/auth/v1
+        label:      Authentication status
+        dscr:       Returns the undecoded jwt, the decoded jwt and internally stored account data.
+        icon:       FaPassport
+        service:    core
+        methods:
+            get:    Glued\Controllers\StatusController:auth
     be_core_status_request_v1:
         pattern:    ${routes.be_core.path}/status/request/v1
         path:       ${routes.be_core.path}/status/request/v1

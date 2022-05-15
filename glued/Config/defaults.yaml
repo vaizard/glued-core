@@ -99,7 +99,7 @@ headers:
 
 casbin:
     model:      default
-    modelconf:  ${glued.rootpath}/glued/Includes/Casbin/${casbin.model}.model
+    modelconf:  ${glued.rootpath}/glued/Config/Casbin/${casbin.model}.model
     adapter:    file
 
 policies:
@@ -121,7 +121,6 @@ policies:
 slim:
     logErrors:              true
     logErrorDetails:        true
-    debugEngine:            Whoops
     displayErrorDetails:    true
     determineRouteBeforeAppMiddleware: true
 
@@ -166,9 +165,17 @@ oidc:
         login:      http://localhost:3000   # TODO use routes here
     header: Authorization
     regexp: '/Bearer\s+(.*)$/i'
-    cookie: AccessToken
+    cookie: token
     cookie_param:
         samesite:   "Lax;"      # String terminated by a `;`
         secure:     "Secure;"   # String terminated by a `;`
         path:       "/;"        # String terminated by a `;`
     cookie_params: SameSite=${oidc.cookie_param.samesite} ${oidc.cookie_param.secure} Path=${oidc.cookie_param.path};
+
+cors:
+    origin: [ "*", "https://10.146.149.186", "10.146.149.186", "localhost" ]
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
+    headers.allow: ["Authorization", "If-Match", "If-Unmodified-Since", "DNT", "Keep-Alive", "User-Agent", "X-CustomHeader", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Content-Range", "Content-Length" ]
+    headers.expose: [ "Etag" ] 
+    credentials: true
+    cache: 600

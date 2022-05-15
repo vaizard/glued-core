@@ -21,6 +21,7 @@ use Slim\addRoutingMiddleware;
 use Tuupola\Middleware\CorsMiddleware;
 use Zeuxisoo\Whoops\Slim\WhoopsMiddleware;
 use Whoops\Handler\JsonResponseHandler;
+use Glued\Controllers\Eee;
 
 /**
  * WARNING
@@ -62,14 +63,9 @@ $app->add(new Middlewares\Csp($csp));
 
 // The CorsMiddleware injects `Access-Control-*` response headers and acts
 // accordingly. TODO configure CorsMiddleware
-$app->add(new Tuupola\Middleware\CorsMiddleware([
-    "origin" => ["*"],
-    "methods" => ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    "headers.allow" => ["Authorization", "If-Match", "If-Unmodified-Since", "DNT", "Keep-Alive", "User-Agent", "X-CustomHeader", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Content-Range", "Content-Length" ],
-    "headers.expose" => ["Etag"],
-    "credentials" => true,
-    "cache" => 600
-]));
+
+
+$app->add(new Tuupola\Middleware\CorsMiddleware($settings['cors']));
 
 
 // RoutingMiddleware provides the FastRoute router. See
@@ -95,56 +91,34 @@ $app->add(new MethodOverrideMiddleware);
  * for middleware added after it.
  */
 
-if ($settings['slim']['debugEngine'] == "Whoops") {
-    //$_SERVER['HTTP_X_REQUESTED_WITH'] = 'xmlhttprequest';
-    $app->add(new Zeuxisoo\Whoops\Slim\WhoopsMiddleware([
+$jsonErrorHandler = function ($exception, $inspector, $run) {
+    global $settings;
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
+    header('Access-Control-Allow-Credentials: true');
+    header("Content-Type: application/json");
+
+    $r['code'] = $exception->getCode();
+    $r['message'] = $exception->getMessage();
+    $r['title']   = $inspector->getExceptionName() ;
+    $r['file']    = $exception->getFile() . ' ' . $exception->getLine();
+
+    $short = explode('\\', $r['title']);
+    $short = (string) array_pop($short); 
+
+    $r['hint'] = "No hints, sorry.";
+    ($short == "AuthJwtException") && $r['hint'] = "Login at ".$settings['oidc']['uri']['login'];
+    ($short == "AuthTokenException") && $r['hint'] = "Login at ".$settings['oidc']['uri']['login'];
+
+    echo json_encode($r);
+    exit;
+};
+
+$app->add(new Zeuxisoo\Whoops\Slim\WhoopsMiddleware([
         'enable' => true,
         'editor' => 'sublime',
-        'title'  => 'Custom whoops page title',
-    ]));
-
-} else {
-
-    /**
-     * @param bool $displayErrorDetails -> Should be set to false in production
-     * @param bool $logErrors -> Parameter is passed to the default ErrorHandler
-     * @param bool $logErrorDetails -> Display error details in error log
-     * which can be replaced by a callable of your choice.
-     */
-    $errorMiddleware = new ErrorMiddleware(
-        $app->getCallableResolver(),
-        $app->getResponseFactory(),
-        $settings['slim']['displayErrorDetails'],
-        $settings['slim']['logErrors'],
-        $settings['slim']['logErrorDetails']
-    );
-
-    //if ($settings['displayErrorDetails'] === false) {
-        $errorHandler = $errorMiddleware->getDefaultErrorHandler();
-        $errorHandler->registerErrorRenderer('application/json', JsonErrorRenderer::class);
-        //$errorHandler->registerErrorRenderer('text/html', HtmlErrorRenderer::class);
-        $errorHandler->forceContentType('application/json');
-        // TODO beautify html renderer
-        // TODO review json renderer & modify if needed
-        // HELP https://akrabat.com/custom-error-rendering-in-slim-4/
-    //}
-
-    $app->add($errorMiddleware);
-
-    /*
-    // Example 404 override. Usage: `throw new HttpNotFoundException($request, 'optional message');`
-    // Must be placed above the $app->add();
-    $errorMiddleware->setErrorHandler(HttpNotFoundException::class, function ($request, $exception, $displayErrorDetails, $logErrors, $logErrorDetails) use ($container) {
-        $response = new Psr7Response();
-        return $container->get('view')->render(
-            $response->withStatus(404), 
-            'Core/Views/errors/404.twig'
-        );
-    });
-    */
-   
-}
-
+], [$jsonErrorHandler]));
 
 
 
