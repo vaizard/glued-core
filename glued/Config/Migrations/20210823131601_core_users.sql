@@ -12,7 +12,7 @@ CREATE TABLE `t_core_users` (
   `c_nick` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Nickname',
   `c_ts_created` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp: account created',
   `c_ts_modified` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Timestamp: account modified',
-  `c_stor_name` varchar(255) GENERATED ALWAYS AS (`c_nick`) VIRTUAL COMMENT '[VIRTUAL] Stor name',
+  `c_stor_name` varchar(255) GENERATED ALWAYS AS (BIN_TO_UUID(`c_uuid`)) VIRTUAL COMMENT '[VIRTUAL] Stor name',
   PRIMARY KEY (`c_uuid`),
   KEY `c_nick` (`c_nick`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='Users profile, account settings, attriebutes, and default data.';
