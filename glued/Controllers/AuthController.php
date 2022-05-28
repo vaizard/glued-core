@@ -34,9 +34,29 @@ class AuthController extends AbstractController
         $data = [ 'enforcer' => $_SERVER['HTTP_X_ORIGINAL_URI'] ?? 'bad request' ];
         $data = $_SERVER;
 
-        // hardcoded testcase
-        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_pass_v1']['path']) return $response->withJson($data)->withStatus(200);
-        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail_v1']['path']) return $response->withJson($data)->withStatus(403);
+        // hardcoded testcases
+        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_pass_v1']['path']) {
+           if ($request->getMethod() === 'OPTIONS') { 
+              return $response->withStatus(204)
+                ->withHeader('Access-Control-Allow-Origin', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+                ->withHeader('Access-Control-Allow-Headers', 'GET, POST, PUT, DELETE, PATCH')
+                ->withHeader('Access-Control-Allow-Methods', 'true')
+                ->withHeader('Access-Control-Allow-Credentials', '*');
+           }
+           return $response->withJson($data)->withStatus(200);
+        }
+       
+        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail_v1']['path']) { 
+           if ($request->getMethod() === 'OPTIONS') { 
+              return $response->withStatus(204)
+                ->withHeader('Access-Control-Allow-Origin', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+                ->withHeader('Access-Control-Allow-Headers', 'GET, POST, PUT, DELETE, PATCH')
+                ->withHeader('Access-Control-Allow-Methods', 'true')
+                ->withHeader('Access-Control-Allow-Credentials', '*');
+           }
+           return $response->withJson($data)->withStatus(401);
+        }
+       
         return $response->withJson($data);
     }
 
