@@ -110,6 +110,7 @@ $jsonErrorHandler = function ($exception, $inspector, $run) {
     $r['hint'] = "No hints, sorry.";
     if ($short == "AuthJwtException")   { $r['hint'] = "Login at ".$settings['oidc']['uri']['login']; header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized'); }
     if ($short == "AuthTokenException") { $r['hint'] = "Login at ".$settings['oidc']['uri']['login']; header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized'); }
+    if ($short == "HttpNotFoundException") { header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not fond'); }
     echo json_encode($r);
     exit;
 };
