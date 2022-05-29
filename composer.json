@@ -104,7 +104,7 @@
       "systemctl reload nginx"
     ],
     "migrate": [
-      "for dir in $(find ./glued/Config/Migrations -not -empty -type d) ; do dbmate -d \"${dir}\" -s './private/install/schema.sql' migrate; done;"
+      "for dirs in $(find ./glued/Config/Migrations -not -empty -type d) ; do dbmate -d \"${dirs}\" -s './private/install/schema.sql' migrate; done;"
     ],
     "start": "php -S localhost:8080 -t public"
   },

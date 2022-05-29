@@ -34,6 +34,9 @@ class AuthController extends AbstractController
         $data = [ 'enforcer' => $_SERVER['HTTP_X_ORIGINAL_URI'] ?? 'bad request' ];
         $data = $_SERVER;
 
+           echo  'lala'.$request->getMethod(); die();
+
+
         // hardcoded testcases
         if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_pass_v1']['path']) {
            if ($request->getMethod() === 'OPTIONS') { 
@@ -45,8 +48,9 @@ class AuthController extends AbstractController
            }
            return $response->withJson($data)->withStatus(200);
         }
+
        
-        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail_v1']['path']) { 
+        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail_v1']['path']) {
            if ($request->getMethod() === 'OPTIONS') { 
               return $response->withStatus(204)
                 ->withHeader('Access-Control-Allow-Origin', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')

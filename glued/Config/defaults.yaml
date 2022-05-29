@@ -173,7 +173,7 @@ oidc:
     cookie_params: SameSite=${oidc.cookie_param.samesite} ${oidc.cookie_param.secure} Path=${oidc.cookie_param.path};
 
 cors:
-    origin: [ "*", "https://10.146.149.186", "10.146.149.186", "localhost" ]
+    origin: [ "https://gdev.industra.space", "localhost", "*" ]
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
     headers.allow: ["Authorization", "If-Match", "If-Unmodified-Since", "DNT", "Keep-Alive", "User-Agent", "X-CustomHeader", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Content-Range", "Content-Length" ]
     headers.expose: [ "Etag" ] 
