@@ -102,10 +102,12 @@ $app->add(new MethodOverrideMiddleware);
 
 $jsonErrorHandler = function ($exception, $inspector, $run) {
     global $settings;
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
-    header('Access-Control-Allow-Credentials: true');
+    // NOTE this relies on the settings to be configured correctly and will burp if not.
+    header('Access-Control-Allow-Origin: '.$settings['cors']['origin'][0]);
+    header('Access-Control-Allow-Headers: '.implode(', ', $settings['cors']['headers.allow']));
+    header('Access-Control-Allow-Methods: '.implode(', ', $settings['cors']['methods']));
+    header('Access-Control-Expose-Headers: '.implode(', ', $settings['cors']['headers.expose']));
+    header('Access-Control-Allow-Credentials: '.($settings['cors']['origin'] ? 'true' : 'false'));
     header("Content-Type: application/json");
 
     $r['code'] = $exception->getCode();
@@ -117,9 +119,13 @@ $jsonErrorHandler = function ($exception, $inspector, $run) {
     $short = (string) array_pop($short); 
 
     $r['hint'] = "No hints, sorry.";
-    if ($short == "AuthJwtException")   { $r['hint'] = "Login at ".$settings['oidc']['uri']['login']; header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized'); }
-    if ($short == "AuthTokenException") { $r['hint'] = "Login at ".$settings['oidc']['uri']['login']; header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized'); }
-    if ($short == "HttpNotFoundException") { header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not fond'); }
+    $http = '500 Internal Server Error';
+    
+    if ($short == "AuthJwtException")       { $http = '401 Unauthorized'; $r['hint'] = "Login at ".$settings['oidc']['uri']['login']; }
+    if ($short == "AuthTokenException")     { $http = '401 Unauthorized'; $r['hint'] = "Login at ".$settings['oidc']['uri']['login']; }
+    if ($short == "HttpNotFoundException")  { $http = '404 Not fond'; }
+
+    header($_SERVER['SERVER_PROTOCOL'].' '.$http);
     echo json_encode($r);
     exit;
 };
