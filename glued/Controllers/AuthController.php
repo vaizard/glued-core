@@ -26,42 +26,30 @@ class AuthController extends AbstractController
      * @return Response with 200 or 403 (allow/deny)
      */
     public function enforce(Request $request, Response $response, array $args = []): Response {
+        // Initialize
         $data = [];
-        if (!isset($_SERVER['HTTP_X_ORIGINAL_URI'])) {
-            return $response->withJson($_SERVER)->withStatus(403);
-            throw new \Exception('Internal resource accessed externally or proxy misconfigured.');
-        }
-        $data = [ 'enforcer' => $_SERVER['HTTP_X_ORIGINAL_URI'] ?? 'bad request' ];
-        $data = $_SERVER;
 
-           echo  'lala'.$request->getMethod(); die();
-
-
-        // hardcoded testcases
-        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_pass_v1']['path']) {
-           if ($request->getMethod() === 'OPTIONS') { 
-              return $response->withStatus(204)
-                ->withHeader('Access-Control-Allow-Origin', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
-                ->withHeader('Access-Control-Allow-Headers', 'GET, POST, PUT, DELETE, PATCH')
-                ->withHeader('Access-Control-Allow-Methods', 'true')
-                ->withHeader('Access-Control-Allow-Credentials', '*');
-           }
-           return $response->withJson($data)->withStatus(200);
+        // Handle direct access (nginx misconfiguration)
+        if ((!array_key_exists('HTTP_X_ORIGINAL_URI', $_SERVER)) or (!array_key_exists('HTTP_X_ORIGINAL_URI', $_SERVER))) {
+            $data['message'] = 'Unauthorized.';
+            $data['code'] = 403;
+            $data['hint'] = 'Authorization headers missing, endpoint accessed directly or proxy misconfigured.';
+            return $response->withJson($data)->withStatus(403);
         }
 
-       
-        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail_v1']['path']) {
-           if ($request->getMethod() === 'OPTIONS') { 
-              return $response->withStatus(204)
-                ->withHeader('Access-Control-Allow-Origin', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
-                ->withHeader('Access-Control-Allow-Headers', 'GET, POST, PUT, DELETE, PATCH')
-                ->withHeader('Access-Control-Allow-Methods', 'true')
-                ->withHeader('Access-Control-Allow-Credentials', '*');
-           }
-           return $response->withJson($data)->withStatus(401);
-        }
-       
-        return $response->withJson($data);
+        // Skip authorization on all OPTIONS requests
+        if ($_SERVER['HTTP_X_ORIGINAL_METHOD'] === 'OPTIONS') {
+            return $response->withStatus(200)->withHeader('Content-Length', 0);
+        } 
+
+        // Hardcoded replies 
+        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_pass_v1']['path']) { return $response->withJson($data)->withStatus(200); }
+        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail_v1']['path']) { return $response->withJson($data)->withStatus(403); }
+
+        // TODO do casbin authorization here
+
+        // Fallback authorization response: DENY
+        return $response->withJson($data)->withStatus(403);
     }
 
    /**
@@ -73,7 +61,10 @@ class AuthController extends AbstractController
      * @return Response Json result set.
      */
     public function say_pass(Request $request, Response $response, array $args = []): Response {
-        return $response->withJson(['message' => 'pass']);
+        return $response->withJson([
+            'message' => 'pass',
+            'request' => $request->getMethod()
+        ]);
     }
 
    /**
@@ -85,7 +76,9 @@ class AuthController extends AbstractController
      * @return Response Json result set.
      */
     public function say_fail(Request $request, Response $response, array $args = []): Response {
-        return $response->withJson(['message' => 'fail']);
-    }
+        return $response->withJson([
+            'message' => 'fail',
+            'request' => $request->getMethod()
+        ]);    }
 
 }

@@ -4,6 +4,15 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
 
+
+/**
+ * Catch-all route to serve a a 204 options response
+ */
+$app->options('/{routes:.+}', function ($request, $response, $args) {
+    return $response->withStatus(204);
+})->setName('fallback_options');
+
+
 foreach ($settings['routes'] as $name => $leaf) {
     if (isset($leaf['methods'])) {
         foreach ($leaf['methods'] as $request => $method) {
@@ -13,13 +22,6 @@ foreach ($settings['routes'] as $name => $leaf) {
     }
 }
 
-/**
- * Catch-all route to serve a a 204 options response
- * NOTE: make sure this route is defined last
- */
-$app->options('/{routes:.+}', function ($request, $response, $args) {
-    return $response->withCode(204);
-})->setName('fallback_options');
 
 /**
  * Catch-all route to serve a 404 Not Found page if none of the routes match

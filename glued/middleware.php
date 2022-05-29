@@ -63,9 +63,15 @@ $app->add(new Middlewares\Csp($csp));
 
 // The CorsMiddleware injects `Access-Control-*` response headers and acts
 // accordingly. TODO configure CorsMiddleware
-
-
-$app->add(new Tuupola\Middleware\CorsMiddleware($settings['cors']));
+$cors = $settings['cors'];
+$cors['error'] = function ($request, $response, $arguments) {
+        $data["status"] = "error";
+        $data["message"] = $arguments["message"];
+        return $response
+            ->withHeader("Content-Type", "application/json")
+            ->write(json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+    };
+$app->add(new Tuupola\Middleware\CorsMiddleware($cors));
 
 
 // RoutingMiddleware provides the FastRoute router. See
@@ -80,6 +86,9 @@ $app->addRoutingMiddleware();
 // and behave as a propper API client. This middleware must be added before 
 // $app->addRoutingMiddleware().
 $app->add(new MethodOverrideMiddleware);
+
+
+
 
 
 /**
