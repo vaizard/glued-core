@@ -10,7 +10,6 @@ routes:
         path:       /api/skeleton
         pattern:    /api/skeleton
         label:      Skeleton
-        icon:       GiSkeleton
         dscr:       A routegroup, no methods here.
 
     #########################################################
@@ -22,7 +21,6 @@ routes:
         path:       ${routes.be_skeleton.path}/health/v1
         label:      Skeleton health
         dscr:       A healthcheck endpoint for the microservice.
-        icon:       FaHeartbeat
         service:    skeleton
         provides:   health
         methods:
@@ -37,7 +35,6 @@ routes:
         path:       ${routes.be_skeleton.path}/routes/list/v1
         label:      Skeleton routes list
         dscr:       A route list endpoint for the microservice.
-        icon:       SiReactrouter
         service:    skeleton
         provides:   routes_list
         methods:
@@ -47,7 +44,6 @@ routes:
         path:       ${routes.be_skeleton.path}/routes/tree/v1
         label:      Skeleton routes tree - ${routes.host}
         dscr:       A route tree endpoint for the microservice.
-        icon:       SiReactrouter
         service:    skeleton
         provides:   routes_tree
         methods:
