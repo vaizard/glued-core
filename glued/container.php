@@ -4,10 +4,12 @@ use Alcohol\ISO4217;
 use Casbin\Enforcer;
 use Casbin\Util\BuiltinOperations;
 use DI\Container;
+/*
 use Facile\OpenIDClient\Client\ClientBuilder;
 use Facile\OpenIDClient\Client\Metadata\ClientMetadata;
 use Facile\OpenIDClient\Issuer\IssuerBuilder;
 use Facile\OpenIDClient\Service\Builder\AuthorizationServiceBuilder;
+*/
 use Glued\Lib\Auth;
 use Glued\Lib\Utils;
 use Goutte\Client;
@@ -28,7 +30,7 @@ use Selective\Transformer\ArrayTransformer;
 use voku\helper\AntiXSS;
 use VStelmakh\UrlHighlight\UrlHighlight;
 use VStelmakh\UrlHighlightTwigExtension\UrlHighlightExtension;
-use Glued\Classes\Exceptions\InternalException;
+use Glued\Libjou\Exceptions\InternalException;
 
 
 $container->set('events', function () {
@@ -80,17 +82,13 @@ $container->set('settings', function() {
             'mysql_database' => 'glued',
             'mysql_username' => 'glued',
             'mysql_password' => 'glued-pw',
-        ],       
+        ],
     ];
 
     // Init yaml parsing
     $class_sy = new \Symfony\Component\Yaml\Yaml;
     $class_ye = new Grasmash\YamlExpander\YamlExpander(new NullLogger());
 
-    foreach (glob(__ROOT__ . '/glued/Config/defaults.php') as $configfile) {
-        $ret = array_merge_recursive($ret, require_once($configfile));
-    }
-    
     // Load and parse the yaml configs
     $files = __ROOT__ . '/glued/Config/defaults.yaml';
     $yaml = file_get_contents($files);
@@ -103,7 +101,7 @@ $container->set('settings', function() {
     $ret = $class_ye->expandArrayProperties($array, $refs);
 
     // Read the routes
-    $files = glob(__ROOT__ . '/config/*/routes.yaml');
+    $files = glob($ret['glued']['datapath'] . '/*/cache/routes.yaml');
     foreach ($files as $file) {
         $yaml = file_get_contents($file);
         $array = $class_sy->parse($yaml);
@@ -198,6 +196,7 @@ $container->set('enforcer', function (Container $c) {
     return $e;
 });
 
+/*
 $container->set('oidc_adm', function (Container $c) {
     $s = $c->get('settings')['oidc'];
     $client = \Keycloak\Admin\KeycloakClient::factory([
@@ -231,6 +230,7 @@ $container->set('oidc_svc', function (Container $c) {
     $service = (new AuthorizationServiceBuilder())->build();
     return $service;
 });
+*/
 
 $container->set('iso4217', function() {
     return new Alcohol\ISO4217();

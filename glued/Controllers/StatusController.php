@@ -7,8 +7,6 @@ namespace Glued\Controllers;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Glued\Classes\Auth;
-use Jose\Component\Core\JWKSet;
-use Jose\Easy\Load;
 use Glued\Lib\Exceptions\DefaultException;
 use Glued\Lib\Exceptions\AuthTokenException;
 use Glued\Lib\Exceptions\AuthJwtException;
@@ -36,7 +34,7 @@ class StatusController extends AbstractController
             $method = 'get' . $m;
             $data[strtolower($m)] = $parser->$method();
         }
-        return $response->withJson($data);
+        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
     /**
@@ -47,7 +45,7 @@ class StatusController extends AbstractController
      * @return Response Json result set.
      */
     public function config(Request $request, Response $response, array $args = []): Response {
-        return $response->withJson($this->settings);
+        return $response->withJson($this->settings, options: JSON_UNESCAPED_SLASHES);
     }  
 
     /**
@@ -59,7 +57,7 @@ class StatusController extends AbstractController
      */
     public function phpconst(Request $request, Response $response, array $args = []): Response {
         $arr = get_defined_constants(true);
-        $response->getBody()->write(json_encode($arr, JSON_PARTIAL_OUTPUT_ON_ERROR));
+        $response->getBody()->write(json_encode($arr, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-type', 'application/json');
     }
 
@@ -93,7 +91,7 @@ class StatusController extends AbstractController
         $certs = $this->auth->get_jwks($oidc);
         $accesstoken = $this->auth->fetch_token($request);
         $arr = $this->auth->decode_token($accesstoken, $certs);
-        return $response->withJson($arr);
+        return $response->withJson($arr, options: JSON_UNESCAPED_SLASHES);
     }
 
     /**

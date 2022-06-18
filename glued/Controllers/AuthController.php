@@ -5,8 +5,6 @@ namespace Glued\Controllers;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Glued\Classes\Auth;
-use Jose\Component\Core\JWKSet;
-use Jose\Easy\Load;
 use Glued\Lib\Exceptions\DefaultException;
 use Glued\Lib\Exceptions\AuthTokenException;
 use Glued\Lib\Exceptions\AuthJwtException;
@@ -34,7 +32,7 @@ class AuthController extends AbstractController
             $data['message'] = 'Unauthorized.';
             $data['code'] = 403;
             $data['hint'] = 'Authorization headers missing, endpoint accessed directly or proxy misconfigured.';
-            return $response->withJson($data)->withStatus(403);
+            return $response->withJson($data);//->withStatus(403);
         }
 
         // Skip authorization on all OPTIONS requests
@@ -49,7 +47,7 @@ class AuthController extends AbstractController
         // TODO do casbin authorization here
 
         // Fallback authorization response: DENY
-        return $response->withJson($data)->withStatus(403);
+        return $response->withJson($data);//->withStatus(403);
     }
 
    /**

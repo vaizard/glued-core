@@ -21,6 +21,19 @@ routes:
         dscr:       A routegroup, no methods here.
 
     #########################################################
+    # API HOME                                              #
+    #########################################################
+
+    be:
+        service:    core
+        pattern:    /api
+        path:       /api
+        label:      API Home
+        dscr:       Welcome route.
+        methods:
+            get:    Glued\Controllers\ServiceController:home
+
+    #########################################################
     # CORE / STATUS                                         #
     #########################################################
     
@@ -132,25 +145,6 @@ routes:
         service:    core
         methods:
             get:    Glued\Controllers\ServiceController:stub
-    be_core_discovery_routes_list_v1:
-        pattern:    ${routes.be_core.path}/discovery/routes/list/v1
-        path:       ${routes.be_core.path}/discovery/routes/list/v1
-        label:      Skeleton routes list
-        dscr:       A route list endpoint for the microservice.
-        service:    skeleton
-        provides:   routes_list
-        methods:
-            get:    Glued\Controllers\ServiceController:discover_routes_list
-    be_core_discovery_routes_tree_v1:
-        pattern:    ${routes.be_core.path}/discovery/routes/tree/v1
-        path:       ${routes.be_core.path}/discovery/routes/tree/v1
-        label:      Skeleton routes tree
-        dscr:       A route tree endpoint for the microservice.
-        service:    skeleton
-        provides:   routes_tree
-        methods:
-            get:    Glued\Controllers\ServiceController:discover_routes_tree
-
     be_internal_core_auth_enforce_v1:
         pattern:    /internal/auth/enforce/v1
         path:       /internal/auth/enforce/v1

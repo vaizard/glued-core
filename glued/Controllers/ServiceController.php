@@ -7,8 +7,6 @@ namespace Glued\Controllers;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Glued\Classes\Auth;
-use Jose\Component\Core\JWKSet;
-use Jose\Easy\Load;
 use Glued\Classes\Exceptions\AuthTokenException;
 use Glued\Classes\Exceptions\AuthJwtException;
 use Glued\Classes\Exceptions\AuthOidcException;
@@ -20,6 +18,21 @@ class ServiceController extends AbstractController
 {
 
     /**
+     * Returns list of all routes.
+     * @param  Request  $request  
+     * @param  Response $response 
+     * @param  array    $args     
+     * @return Response Json result set.
+     */
+    public function discover_routes_list(Request $request, Response $response, array $args = []): Response {
+        $http = $this->goutte->request('GET', 'http://127.0.0.1/api/core/ares_es');
+        $data = $this->goutte->getResponse()->getContent() ?? null;
+        //$data = null;
+        return $response->withJson($data);
+    }
+
+
+    /**
      * Returns list of routes.
      * @param  Request  $request  
      * @param  Response $response 
@@ -27,8 +40,8 @@ class ServiceController extends AbstractController
      * @return Response Json result set.
      */
     public function routes_list(Request $request, Response $response, array $args = []): Response {
-        $data = $this->utils->get_routes_array();
-        return $response->withJson($data);
+        $data = $this->utils->get_routes_array( $this->utils->get_current_route($request) );
+        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
     /**
@@ -70,6 +83,22 @@ class ServiceController extends AbstractController
                 'service' => basename(__ROOT__),
             ];
         return $response->withJson($data);
+    }
+
+    /**
+     * Returns /api home response.
+     * @param  Request  $request
+     * @param  Response $response
+     * @param  array    $args
+     * @return Response Json result set.
+     */
+    public function home(Request $request, Response $response, array $args = []): Response {
+        $data = [
+            'message' => 'Welcome! Follow to the Uri in details to obtain a list of available routes.',
+            'details' => $this->settings['glued']['protocol'].$this->settings['glued']['hostname'].$this->routecollector->getRouteParser()->UrlFor('be_core_routes_list_v1'),
+            'status' => 'OK'
+        ];
+        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
 
