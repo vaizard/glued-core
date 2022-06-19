@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 
 use DI\Container;
-use Glued\Classes\Error\HtmlErrorRenderer;
-use Glued\Classes\Error\JsonErrorRenderer;
 use Glued\Lib\Middleware\AntiXSSMiddleware;
 use Glued\Lib\Middleware\TimerMiddleware;
 use Middlewares\Csp;
@@ -15,13 +13,10 @@ use Slim\App;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Middleware\ErrorMiddleware;
 use Slim\Middleware\MethodOverrideMiddleware;
-use Slim\Views\Twig;
-use Slim\Views\TwigMiddleware;
-use Slim\addRoutingMiddleware;
 use Tuupola\Middleware\CorsMiddleware;
 use Zeuxisoo\Whoops\Slim\WhoopsMiddleware;
 use Whoops\Handler\JsonResponseHandler;
-use Glued\Controllers\Eee;
+
 
 /**
  * WARNING
@@ -126,7 +121,7 @@ $jsonErrorHandler = function ($exception, $inspector, $run) {
     if ($short == "HttpNotFoundException")  { $http = '404 Not fond'; }
 
     header($_SERVER['SERVER_PROTOCOL'].' '.$http);
-    echo json_encode($r);
+    echo json_encode($r, JSON_UNESCAPED_SLASHES);
     exit;
 };
 

@@ -19,7 +19,7 @@ db:
 
 logger:
     name:       ${glued.uservice}
-    path:       ${glued.datapath}/logs/${glued.uservice}.log
+    path:       ${glued.datapath}/${glued.uservice}/cache/main.log
     level:      !php/const \Monolog\Logger::DEBUG
 
 smtp:

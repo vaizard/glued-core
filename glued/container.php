@@ -18,6 +18,7 @@ use Http\Discovery\Psr17FactoryDiscovery;
 use Keiko\Uuid\Shortener\Dictionary;
 use Keiko\Uuid\Shortener\Shortener;
 use Monolog\Handler\StreamHandler;
+use Monolog\Level;
 use Monolog\Logger;
 use Monolog\Processor\UidProcessor;
 use Nyholm\Psr7\getParsedBody;
@@ -25,12 +26,10 @@ use Phpfastcache\CacheManager;
 use Phpfastcache\Config\ConfigurationOption;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Log\NullLogger;
-use Sabre\Event\Emitter; //
+use Sabre\Event\Emitter;
 use Selective\Transformer\ArrayTransformer;
 use voku\helper\AntiXSS;
-use VStelmakh\UrlHighlight\UrlHighlight;
-use VStelmakh\UrlHighlightTwigExtension\UrlHighlightExtension;
-use Glued\Libjou\Exceptions\InternalException;
+use Glued\Lib\Exceptions\InternalException;
 
 
 $container->set('events', function () {

@@ -80,10 +80,10 @@ routes:
         pattern:    ${routes.be_core.path}/status/request/v1
         path:       ${routes.be_core.path}/status/request/v1
         label:      Show request headers
-        dscr:       Returns the client's request geaders.
+        dscr:       Returns the client's request headers.
         service:    core
         methods:
-            get:    Glued\Controllers\AdmController:reflect_request
+            get:    Glued\Controllers\StatusController:reflect_request
     be_core_status_sysinfo_v1:
         pattern:    ${routes.be_core.path}/status/sysinfo/v1
         path:       ${routes.be_core.path}/status/sysinfo/v1
@@ -100,7 +100,14 @@ routes:
         service:    core
         methods:
             get:    Glued\Controllers\StatusController:config
-
+    be_core_status_server_v1:
+        pattern:    ${routes.be_core.path}/status/server/v1
+        path:       ${routes.be_core.path}/status/server/v1
+        label:      Glued Config
+        dscr:       Returns Glued configuration.
+        service:    core
+        methods:
+            get:    Glued\Controllers\StatusController:server
     #########################################################
     # CORE / AUTH                                           #
     #########################################################
@@ -145,46 +152,14 @@ routes:
         service:    core
         methods:
             get:    Glued\Controllers\ServiceController:stub
-    be_internal_core_auth_enforce_v1:
-        pattern:    /internal/auth/enforce/v1
-        path:       /internal/auth/enforce/v1
+    internal_core_auth_enforce_v1:
+        pattern:    /internal/auth/v1
+        path:       /internal/auth/v1
         label:      Authorization enforcer
         dscr:       Internal route handled nginx (hits be_core_auth_enforce_v1). Route method is a stub that will invoke only when nginx is misconfigured.
         service:    core
         methods:
-            get:    Glued\Controllers\ServiceController:stub
-    fe_core_auth_callback:
-        pattern:    /auth/signin
-        path:       /auth/signin
-        label:      Signin
-        dscr:       (Re)authenticates user against Keycloak.
-        service:    core
-        methods:
-            get:    Glued\Controllers\ServiceController:stub
-    fe_core_auth_signout:
-        pattern:    /auth/signout
-        path:       /auth/signout
-        label:      Signout
-        dscr:       Signs user out.
-        service:    core
-        methods:
-            get:    Glued\Controllers\ServiceController:stub
-    fe_core_auth_users:
-        pattern:    /auth/users
-        path:       /auth/users
-        label:      Manage users
-        dscr:       Frontend for managing users.
-        service:    core
-        methods:
-            get:    Glued\Controllers\ServiceController:stub
-    fe_core_auth_domains:
-        pattern:    /auth/domains
-        path:       /auth/domains
-        label:      Manage domains
-        dscr:       Frontend for managing domains.
-        service:    core
-        methods:
-            get:    Glued\Controllers\ServiceController:stub
+            get:    Glued\Controllers\AuthController:enforce
 
     #########################################################
     # CORE / HEALTH                                         #

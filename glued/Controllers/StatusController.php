@@ -109,7 +109,7 @@ class StatusController extends AbstractController
         $accesstoken = $this->auth->fetch_token($request);
         $arr = $this->auth->decode_token($accesstoken, $certs);
         $arr['users'] = $this->auth->users();
-        return $response->withJson($arr);
+        return $response->withJson($arr, options: JSON_UNESCAPED_SLASHES);
     }
 
 
@@ -122,7 +122,22 @@ class StatusController extends AbstractController
      */
     public function reflect_request(Request $request, Response $response, array $args = []): Response {
         $data = getallheaders();
-        return $response->withJson($data);
+        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
+
+
+    /**
+     * Returns server internal state
+     * @param  Request  $request
+     * @param  Response $response
+     * @param  array    $args
+     * @return Response Json result set.
+     */
+    public function server(Request $request, Response $response, array $args = []): Response {
+        $data = $_SERVER;
+        $this->logger->warning("core.status.server method invoked.");
+        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
+    }
+
 
 }

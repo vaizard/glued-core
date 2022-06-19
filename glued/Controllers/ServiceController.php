@@ -6,13 +6,7 @@ namespace Glued\Controllers;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Glued\Classes\Auth;
-use Glued\Classes\Exceptions\AuthTokenException;
-use Glued\Classes\Exceptions\AuthJwtException;
-use Glued\Classes\Exceptions\AuthOidcException;
-use Glued\Classes\Exceptions\DbException;
-use Glued\Classes\Exceptions\TransformException;
-use Linfo\Linfo;
+use Glued\Lib\Exceptions\TransformException;
 
 class ServiceController extends AbstractController
 {
@@ -53,7 +47,7 @@ class ServiceController extends AbstractController
      */
     public function routes_tree(Request $request, Response $response, array $args = []): Response {
         $data = $this->utils->get_routes_tree( $this->utils->get_current_route($request) );
-        return $response->withJson($data);
+        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
     /**
@@ -82,7 +76,7 @@ class ServiceController extends AbstractController
                 'params' => $params,
                 'service' => basename(__ROOT__),
             ];
-        return $response->withJson($data);
+        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
     /**
