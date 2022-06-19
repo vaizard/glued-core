@@ -10,6 +10,9 @@ server {
         # Server setup           #
         ##########################
 
+        # Prevent users to sneak in internal headers
+        more_clear_input_headers 'X-GLUED-*';
+
         more_set_headers 'Access-Control-Allow-Origin: *';
         root /var/www/html/glued-core/public;
         listen 443 ssl http2 default_server;
@@ -32,10 +35,7 @@ server {
 
         # Auth test location before php match
         location /api/ {
-                auth_request /backend/auth;
-                auth_request_set $glued_auth_status $upstream_status;
-                auth_request_set $glued_auth_msg    $sent_http_x_glued_auth_msg;
-                auth_request_set $glued_auth_uuid   $sent_http_x_glued_auth_uuid;
+                include snippets/common/auth-subrequest.conf;
                 try_files $uri $uri/ /index.php$is_args$args;
         }
 
@@ -50,7 +50,7 @@ server {
         ##########################
 
         location = /backend/auth {
-            internal;
+            #internal;
             proxy_pass                 https://127.0.0.1/internal/auth/v1;
             proxy_set_header Host      $host;
             proxy_set_header X-Real-IP $remote_addr;
