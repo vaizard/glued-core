@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 use Alcohol\ISO4217;
 use Casbin\Enforcer;
 use Casbin\Util\BuiltinOperations;
@@ -9,6 +10,7 @@ use Facile\OpenIDClient\Client\Metadata\ClientMetadata;
 use Facile\OpenIDClient\Issuer\IssuerBuilder;
 use Facile\OpenIDClient\Service\Builder\AuthorizationServiceBuilder;
 use Glued\Lib\Auth;
+use Glued\Lib\Exceptions\InternalException;
 use Glued\Lib\Utils;
 use Goutte\Client;
 use Grasmash\YamlExpander\YamlExpander;
@@ -31,7 +33,6 @@ use Sabre\Event\Emitter;
 use Selective\Transformer\ArrayTransformer;
 use Symfony\Component\Yaml\Yaml;
 use voku\helper\AntiXSS;
-use Glued\Lib\Exceptions\InternalException;
 
 /** @noinspection PhpUndefinedVariableInspection */
 $container->set('events', function () {
@@ -40,7 +41,7 @@ $container->set('events', function () {
 
 $container->set('fscache', function () {
     try {
-        $path = $_ENV['datapath'].'/'.basename(__ROOT__).'/cache/psr16';
+        $path = $_ENV['datapath'] . '/' . basename(__ROOT__) . '/cache/psr16';
         CacheManager::setDefaultConfig(new ConfigurationOption([
             "path" => $path,
             "itemDetailedDate" => false,
@@ -58,7 +59,7 @@ $container->set('memcache', function () {
     return new Psr16Adapter('apcu');
 });
 
-$container->set('settings', function() {
+$container->set('settings', function () {
     // Initialize
     $class_sy = new Yaml;
     $class_ye = new YamlExpander(new NullLogger());
@@ -82,7 +83,7 @@ $container->set('settings', function() {
     foreach ($files as $file) {
         $yaml = file_get_contents($file);
         $array = $class_sy->parse($yaml);
-        $routes = array_merge($routes, $class_ye->expandArrayProperties($array)['routes'] );
+        $routes = array_merge($routes, $class_ye->expandArrayProperties($array)['routes']);
     }
 
     $ret['routes'] = $routes;
@@ -103,7 +104,7 @@ $container->set('mysqli', function (Container $c) {
     $db = $c->get('settings')['db'];
     $mysqli = new mysqli($db['host'], $db['username'], $db['password'], $db['database']);
     $mysqli->set_charset($db['charset']);
-    $mysqli->query("SET collation_connection = ".$db['collation']);
+    $mysqli->query("SET collation_connection = " . $db['collation']);
     return $mysqli;
 });
 
@@ -208,16 +209,16 @@ $container->set('oidc_svc', function (Container $c) {
     return $service;
 });
 
-$container->set('iso4217', function() {
+$container->set('iso4217', function () {
     return new Alcohol\ISO4217();
 });
 
 $container->set('mailer', function (Container $c) {
     $smtp = $c->get('settings')['smtp'];
     $transport = (new Swift_SmtpTransport($smtp['addr'], $smtp['port'], $smtp['encr']))
-      ->setUsername($smtp['user']) 
-      ->setPassword($smtp['pass'])
-      ->setStreamOptions(array('ssl' => array('allow_self_signed' => true, 'verify_peer' => false)));
+        ->setUsername($smtp['user'])
+        ->setPassword($smtp['pass'])
+        ->setStreamOptions(array('ssl' => array('allow_self_signed' => true, 'verify_peer' => false)));
     $mailer = new Swift_Mailer($transport);
     $mailLogger = new Swift_Plugins_Loggers_ArrayLogger();
     $mailer->registerPlugin(new Swift_Plugins_LoggerPlugin($mailLogger));
