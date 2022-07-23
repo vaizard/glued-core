@@ -179,21 +179,12 @@ routes:
     # CORE / ROUTES                                         #
     #########################################################
 
-    be_core_routes_list_v1:
-        pattern:    ${routes.be_core.path}/routes/list/v1
-        path:       ${routes.be_core.path}/routes/list/v1
+    be_core_routes_v1:
+        pattern:    ${routes.be_core.path}/routes/v1
+        path:       ${routes.be_core.path}/routes/v1
         label:      Skeleton routes list
         dscr:       A route list endpoint for the microservice.
         service:    skeleton
         provides:   routes_list
         methods:
             get:    Glued\Controllers\ServiceController:routes_list
-    be_core_routes_tree_v1:
-        pattern:    ${routes.be_core.path}/routes/tree/v1
-        path:       ${routes.be_core.path}/routes/tree/v1
-        label:      Skeleton routes tree
-        dscr:       A route tree endpoint for the microservice.
-        service:    skeleton
-        provides:   routes_tree
-        methods:
-            get:    Glued\Controllers\ServiceController:routes_tree

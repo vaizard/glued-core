@@ -47,27 +47,6 @@ $trailingSlash->redirect();
 $app->add($trailingSlash);
 
 
-// The Csp middleware injects csp headers as defined in
-// $settings['headers']['csp']. It also provides the $nonce array
-// which is consumed by the TwigCspMiddleware.
-$csp = new CSPBuilder($settings['headers']['csp']);
-$nonce['script_src'] = $csp->nonce('script-src');
-$nonce['style_src'] = $csp->nonce('style-src');
-$app->add(new Middlewares\Csp($csp));
-
-
-// The CorsMiddleware injects `Access-Control-*` response headers and acts
-// accordingly. TODO configure CorsMiddleware
-$cors = $settings['cors'];
-$cors['error'] = function ($request, $response, $arguments) {
-        $data["status"] = "error";
-        $data["message"] = $arguments["message"];
-        return $response
-            ->withHeader("Content-Type", "application/json")
-            ->write(json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-    };
-$app->add(new Tuupola\Middleware\CorsMiddleware($cors));
-
 
 // RoutingMiddleware provides the FastRoute router. See
 // https://www.slimframework.com/docs/v4/middleware/routing.html
@@ -97,15 +76,8 @@ $app->add(new MethodOverrideMiddleware);
 
 $jsonErrorHandler = function ($exception, $inspector, $run) {
     global $settings;
-    // NOTE this relies on the settings to be configured correctly and will burp if not.
-    header('Access-Control-Allow-Origin: '.$settings['cors']['origin'][0]);
-    header('Access-Control-Allow-Headers: '.implode(', ', $settings['cors']['headers.allow']));
-    header('Access-Control-Allow-Methods: '.implode(', ', $settings['cors']['methods']));
-    header('Access-Control-Expose-Headers: '.implode(', ', $settings['cors']['headers.expose']));
-    header('Access-Control-Allow-Credentials: '.($settings['cors']['origin'] ? 'true' : 'false'));
     header("Content-Type: application/json");
-
-    $r['code'] = $exception->getCode();
+    $r['code']    = $exception->getCode();
     $r['message'] = $exception->getMessage();
     $r['title']   = $inspector->getExceptionName() ;
     $r['file']    = $exception->getFile() . ' ' . $exception->getLine();

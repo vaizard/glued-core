@@ -69,34 +69,23 @@ $container->set('settings', function() {
      * - Return the result
      */
 
-    $ret      = [];
-    $routes   = [];
-    $fallback = [
-        'env' => [
-            'hostname'  => $_SERVER['SERVER_NAME'] ?? 'localhost', 
-            'rootpath'  => __ROOT__,
-            'uservice'  => basename(__ROOT__),
-            'identity'  => 'id.industra.space',
-            'mysql_hostname' => 'localhost',
-            'mysql_database' => 'glued',
-            'mysql_username' => 'glued',
-            'mysql_password' => 'glued-pw',
-        ],
+    $ret    = [];
+    $routes = [];
+    $seed   = [
+        'hostname' => $_SERVER['SERVER_NAME'] ?? gethostbyname(php_uname('n')),
+        'rootpath' => __ROOT__,
+        'uservice' => basename(__ROOT__)
     ];
 
     // Init yaml parsing
     $class_sy = new \Symfony\Component\Yaml\Yaml;
     $class_ye = new Grasmash\YamlExpander\YamlExpander(new NullLogger());
 
-    // Load and parse the yaml configs
+    // Load and parse the yaml configs. Replace yaml references with $_ENV and $seed ($_ENV has precedence)
     $files = __ROOT__ . '/glued/Config/defaults.yaml';
     $yaml = file_get_contents($files);
     $array = $class_sy->parse($yaml, $class_sy::PARSE_CONSTANT);
-
-    // Replace yaml references with $_ENV and defaults/fallbacks,
-    // $_ENV has precedence.
-    $refs['env'] = array_merge($fallback['env'], $_ENV);
-    // Replace yaml references with data provided in $refs
+    $refs['env'] = array_merge($seed, $_ENV);
     $ret = $class_ye->expandArrayProperties($array, $refs);
 
     // Read the routes

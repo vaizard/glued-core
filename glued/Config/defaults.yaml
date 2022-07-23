@@ -34,45 +34,30 @@ smtp:
     throttle_count:   '50'
     throttle_data:    ''
 
-crypto:
-    mail:       ${env.crypto_secret_mail}
-    reqparams:  ${env.crypto_secret_reqparams}
-
-headers:
-    feature-policy:
-        geolocation:      "'self'"
-        midi:             "'self'"
-        notifications:    "'self'"
-        push:             "'self'"
-        sync-xhr:         "'self'"
-        microphone:       "'self'"
-        camera:           "'self'"
-        magnetometer:     "'self'"
-        gyroscope:        "'self'"
-        speaker:          "'self'"
-        vibrate:          "'self'"
-        fullscreen:       "'self'"
-        payment:          "'self'"
-    referrer-policy:      strict-origin-when-cross-origin
-    content-type-options: nosniff
+nginx:
     csp:
         default-src:
             self: true
             allow:
                 - ${glued.protocol}${glued.hostname}
         script-src:
-            self:     true
+            self: true
             allow:
                 - ${glued.protocol}${glued.hostname}
                 - ${glued.protocol}${glued.identity}
-            strict-dynamic: true
-            unsafe-eval: true
+            strict-dynamic: false
+            unsafe-eval: false
         object-src:
             self: true
+        media-src:
+            self: true
+            data: true
+        font-src:
+            self: true
+            data: true
         img-src:
             self: true
-            allow:
-                - data:
+            data: true
         frame-ancestors:
             self: true
             allow:
@@ -91,11 +76,17 @@ headers:
         base-uri: 
             self: true
         require-trusted-types-for: script
-    hsts:
-        enable: true
-        max-age: 15552
-        include-sub-domains: false
-        preload: false
+        upgrade-insecure-requests: true
+    ssl_stapling:
+        ssl_stapling: off
+        ssl_stapling_verify: off
+    cors:
+        origin: ${glued.hostname}
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
+        headers.allow: ["Authorization", "If-Match", "If-Unmodified-Since", "DNT", "Keep-Alive", "User-Agent", "X-CustomHeader", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Content-Range", "Content-Length" ]
+        headers.expose: [ "Etag" ]
+        credentials: true
+        cache: 600
 
 casbin:
     model:      default
@@ -171,11 +162,3 @@ oidc:
         secure:     "Secure;"   # String terminated by a `;`
         path:       "/;"        # String terminated by a `;`
     cookie_params: SameSite=${oidc.cookie_param.samesite} ${oidc.cookie_param.secure} Path=${oidc.cookie_param.path};
-
-cors:
-    origin: [ "https://gdev.industra.space", "localhost", "*" ]
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
-    headers.allow: ["Authorization", "If-Match", "If-Unmodified-Since", "DNT", "Keep-Alive", "User-Agent", "X-CustomHeader", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Content-Range", "Content-Length" ]
-    headers.expose: [ "Etag" ] 
-    credentials: true
-    cache: 600
