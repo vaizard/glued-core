@@ -32,7 +32,7 @@ abstract class AbstractController
      * container, allowing to write $this->db->method() instead of $this->c->db->method()
      * @param  string $property Container property
      */
-    public function __get($property)
+    public function __get(string $property): mixed
     {
         if ($this->c->get($property)) {
             return $this->c->get($property);

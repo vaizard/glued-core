@@ -4,34 +4,36 @@ use Alcohol\ISO4217;
 use Casbin\Enforcer;
 use Casbin\Util\BuiltinOperations;
 use DI\Container;
-/*
 use Facile\OpenIDClient\Client\ClientBuilder;
 use Facile\OpenIDClient\Client\Metadata\ClientMetadata;
 use Facile\OpenIDClient\Issuer\IssuerBuilder;
 use Facile\OpenIDClient\Service\Builder\AuthorizationServiceBuilder;
-*/
 use Glued\Lib\Auth;
 use Glued\Lib\Utils;
 use Goutte\Client;
+use Grasmash\YamlExpander\YamlExpander;
 use GuzzleHttp\Client as Guzzle;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Keiko\Uuid\Shortener\Dictionary;
 use Keiko\Uuid\Shortener\Shortener;
+use Keycloak\Admin\KeycloakClient;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Logger;
 use Monolog\Processor\UidProcessor;
 use Nyholm\Psr7\getParsedBody;
+use Opis\JsonSchema\Validator;
 use Phpfastcache\CacheManager;
 use Phpfastcache\Config\ConfigurationOption;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Log\NullLogger;
 use Sabre\Event\Emitter;
 use Selective\Transformer\ArrayTransformer;
+use Symfony\Component\Yaml\Yaml;
 use voku\helper\AntiXSS;
 use Glued\Lib\Exceptions\InternalException;
 
-
+/** @noinspection PhpUndefinedVariableInspection */
 $container->set('events', function () {
     return new Emitter();
 });
@@ -57,29 +59,16 @@ $container->set('memcache', function () {
 });
 
 $container->set('settings', function() {
-    /**
-     * Configuration is constructed as follows:
-     * 
-     * - Load .env file, don't override existing $_ENV values (bootstrap.php)
-     * - Provide fallback values for undefined env variables
-     * - Load and parse the yaml configs
-     * - Replace yaml references with $_ENV and defaults/fallbacks,
-     *   $_ENV has precedence.
-     * - TODO Cache the result
-     * - Return the result
-     */
-
-    $ret    = [];
-    $routes = [];
-    $seed   = [
+    // Initialize
+    $class_sy = new Yaml;
+    $class_ye = new YamlExpander(new NullLogger());
+    $ret      = [];
+    $routes   = [];
+    $seed     = [
         'hostname' => $_SERVER['SERVER_NAME'] ?? gethostbyname(php_uname('n')),
         'rootpath' => __ROOT__,
         'uservice' => basename(__ROOT__)
     ];
-
-    // Init yaml parsing
-    $class_sy = new \Symfony\Component\Yaml\Yaml;
-    $class_ye = new Grasmash\YamlExpander\YamlExpander(new NullLogger());
 
     // Load and parse the yaml configs. Replace yaml references with $_ENV and $seed ($_ENV has precedence)
     $files = __ROOT__ . '/glued/Config/defaults.yaml';
@@ -120,7 +109,7 @@ $container->set('mysqli', function (Container $c) {
 
 $container->set('db', function (Container $c) {
     $mysqli = $c->get('mysqli');
-    $db = new \MysqliDb($mysqli);
+    $db = new MysqliDb($mysqli);
     return $db;
 });
 
@@ -151,9 +140,10 @@ $container->set('goutte', function () {
 });
 
 $container->set('jsonvalidator', function () {
-    return new \Opis\JsonSchema\Validator;
+    return new Validator;
 });
 
+/** @noinspection PhpUndefinedVariableInspection */
 $container->set('routecollector', $app->getRouteCollector());
 $container->set('responsefactory', $app->getResponseFactory());
 
@@ -184,10 +174,9 @@ $container->set('enforcer', function (Container $c) {
     return $e;
 });
 
-/*
 $container->set('oidc_adm', function (Container $c) {
     $s = $c->get('settings')['oidc'];
-    $client = \Keycloak\Admin\KeycloakClient::factory([
+    $client = KeycloakClient::factory([
         'baseUri'   => $s['server'],
         'realm'     => $s['realm'],
         'client_id' => $s['client']['admin']['id'],
@@ -218,7 +207,6 @@ $container->set('oidc_svc', function (Container $c) {
     $service = (new AuthorizationServiceBuilder())->build();
     return $service;
 });
-*/
 
 $container->set('iso4217', function() {
     return new Alcohol\ISO4217();
@@ -226,13 +214,13 @@ $container->set('iso4217', function() {
 
 $container->set('mailer', function (Container $c) {
     $smtp = $c->get('settings')['smtp'];
-    $transport = (new \Swift_SmtpTransport($smtp['addr'], $smtp['port'], $smtp['encr']))
+    $transport = (new Swift_SmtpTransport($smtp['addr'], $smtp['port'], $smtp['encr']))
       ->setUsername($smtp['user']) 
       ->setPassword($smtp['pass'])
       ->setStreamOptions(array('ssl' => array('allow_self_signed' => true, 'verify_peer' => false)));
-    $mailer = new \Swift_Mailer($transport);
-    $mailLogger = new \Swift_Plugins_Loggers_ArrayLogger();
-    $mailer->registerPlugin(new \Swift_Plugins_LoggerPlugin($mailLogger));
+    $mailer = new Swift_Mailer($transport);
+    $mailLogger = new Swift_Plugins_Loggers_ArrayLogger();
+    $mailer->registerPlugin(new Swift_Plugins_LoggerPlugin($mailLogger));
     return $mailer;
 });
 
@@ -240,13 +228,6 @@ $container->set('mailer', function (Container $c) {
 // *************************************************
 // GLUED CLASSES ***********************************
 // ************************************************* 
-
-// Form-data validation helper (send validation results
-// via session to the original form upon failure)
-$container->set('validator', function (Container $c) {
-   return new Glued\Classes\Validation\Validator;
-});
-
 
 $container->set('auth', function (Container $c) {
     return new Auth($c->get('settings'), 
@@ -268,8 +249,8 @@ $container->set('stor', function (Container $c) {
     return new Stor($c->get('db'));
 });
 */
+
 $container->set('crypto', function () {
-    // TODO cleanup codebase from Crypto initialization
     return new Glued\Classes\Crypto\Crypto();
 });
 
@@ -284,12 +265,3 @@ $container->set('urifactory', function () {
 $container->set('guzzle', function () {
     return new Guzzle();
 });
-
-
-// TODO 
-// - classes/users.php
-// - sjednotit namespace, ted mam app jako glued/core
-//   v users.php bylo glued/core/classes ...
-// - pouzit v accountscontrolleru na vypis 1 uzivatele
-// - je na to preduelany twig, asi nehotovy accounts.twig
-//   do ktereho v accountscontroleru passujeme obsah $users

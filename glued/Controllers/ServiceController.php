@@ -12,21 +12,6 @@ class ServiceController extends AbstractController
 {
 
     /**
-     * Returns list of all routes.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
-     * @return Response Json result set.
-     */
-    public function discover_routes_list(Request $request, Response $response, array $args = []): Response {
-        $http = $this->goutte->request('GET', 'http://127.0.0.1/api/core/ares_es');
-        $data = $this->goutte->getResponse()->getContent() ?? null;
-        //$data = null;
-        return $response->withJson($data);
-    }
-
-
-    /**
      * Returns list of routes.
      * @param  Request  $request  
      * @param  Response $response 
@@ -34,19 +19,7 @@ class ServiceController extends AbstractController
      * @return Response Json result set.
      */
     public function routes_list(Request $request, Response $response, array $args = []): Response {
-        $data = $this->utils->get_routes_array( $this->utils->get_current_route($request) );
-        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
-    }
-
-    /**
-     * Returns routes as a tree.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
-     * @return Response Json result set.
-     */
-    public function routes_tree(Request $request, Response $response, array $args = []): Response {
-        $data = $this->utils->get_routes_tree( $this->utils->get_current_route($request) );
+        $data = $this->utils->get_routes( $this->utils->get_current_route($request) );
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
@@ -89,7 +62,7 @@ class ServiceController extends AbstractController
     public function home(Request $request, Response $response, array $args = []): Response {
         $data = [
             'message' => 'Welcome! Follow to the Uri in details to obtain a list of available routes.',
-            'details' => $this->settings['glued']['protocol'].$this->settings['glued']['hostname'].$this->routecollector->getRouteParser()->UrlFor('be_core_routes_list_v1'),
+            'details' => $this->settings['glued']['protocol'].$this->settings['glued']['hostname'].$this->routecollector->getRouteParser()->UrlFor('be_core_routes_v1'),
             'status' => 'OK'
         ];
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);

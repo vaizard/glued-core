@@ -73,7 +73,7 @@ class StatusController extends AbstractController
             $data = $this->auth->fetch_token($request);
         }  catch (AuthJwtException | AuthTokenException $e) {
             $data['error'] = $e->getMessage();
-            $data['message'] = "Login at ".$oidc['uri']['login'];
+            $data['message'] = "Login at ".$this->settings['oidc']['uri']['login'];
         }
         return $response->withJson($data);
     }
@@ -112,7 +112,6 @@ class StatusController extends AbstractController
         return $response->withJson($arr, options: JSON_UNESCAPED_SLASHES);
     }
 
-
     /**
      * Reflects a client request.
      * @param  Request  $request  
@@ -124,7 +123,6 @@ class StatusController extends AbstractController
         $data = getallheaders();
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
-
 
     /**
      * Returns server internal state
@@ -138,6 +136,5 @@ class StatusController extends AbstractController
         $this->logger->warning("core.status.server method invoked.");
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
-
 
 }

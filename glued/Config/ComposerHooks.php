@@ -2,34 +2,34 @@
 declare(strict_types=1);
 namespace Glued\Config;
 use Composer\Script\Event;
+use Dotenv\Dotenv;
 use Glued\Lib\Crypto;
+use Grasmash\YamlExpander\YamlExpander;
+use PharData;
 use Psr\Log\NullLogger;
 use ParagonIE\CSPBuilder\CSPBuilder;
-
+use Symfony\Component\Yaml\Yaml;
 
 define("__ROOT__", getcwd());
-
 
 class ComposerHooks
 {
 
-
-    public static function preInstall(Event $event) {
+    public static function preInstall(Event $event): void {
         echo "[NOTE] INSTALLING GLUED";
-        exit;
     }
 
-    public static function postPackageInstall(Event $event) {
+    public static function postPackageInstall(Event $event): void {
         $installedPackage = $event->getComposer()->getPackage();
         echo "[NOTE] GLUED INSTALLED";
     }
 
-    public static function genKey(Event $event) {
+    public static function genKey(Event $event): void {
         $crypto = new Crypto();
         echo $crypto->genkey_base64() . PHP_EOL . PHP_EOL;
     }
 
-    public static function getSettings() {
+    public static function getSettings(): array {
         $ret    = [];
         $routes = [];
         $seed   = [
@@ -37,7 +37,7 @@ class ComposerHooks
             'uservice' => basename(__ROOT__)
         ];
         if (!isset($_ENV['GLUED_PROD'])) {
-            $dotenv = \Dotenv\Dotenv::createImmutable(__ROOT__);
+            $dotenv = Dotenv::createImmutable(__ROOT__);
             $dotenv->safeLoad();
         }
 
@@ -47,8 +47,8 @@ class ComposerHooks
         (!isset($_ENV['identity'])) && die('[FAIL] identity env variable not set.' . PHP_EOL . PHP_EOL);
 
         // Init yaml parsing
-        $class_sy = new \Symfony\Component\Yaml\Yaml;
-        $class_ye = new \Grasmash\YamlExpander\YamlExpander(new NullLogger());
+        $class_sy = new Yaml;
+        $class_ye = new YamlExpander(new NullLogger());
 
         // Load and parse the yaml configs. Replace yaml references with $_ENV and $seed ($_ENV has precedence)
         $files = __ROOT__ . '/glued/Config/defaults.yaml';
@@ -68,12 +68,11 @@ class ComposerHooks
         return $ret;
     }
 
-    public static function printSettings() {
+    public static function printSettings(): void {
         print_r(self::getSettings());
     }
 
-    public static function generateNginx() {
-
+    public static function generateNginx(): void {
         $settings = self::getSettings();
         $comment = <<<EOT
         # NOTE that when this file is found under /etc/nginx
@@ -82,7 +81,6 @@ class ComposerHooks
         # changing defaults.yaml
 
         EOT;
-
 
         echo "[INFO] Generating nginx csp headers." . PHP_EOL;
         $policy = CSPBuilder::fromData(json_encode($settings['nginx']['csp']));
@@ -115,7 +113,7 @@ class ComposerHooks
         file_put_contents('/etc/nginx/snippets/server/generated_cors_headers.conf', $comment.$output);
     }
 
-    public static function configTool(Event $event) {
+    public static function configTool(Event $event): void {
         $composer = $event->getComposer();
         echo "[NOTE] STARTING THE CONFIGURATION TESTING AND SETUP TOOL" . PHP_EOL . PHP_EOL;
 
@@ -124,7 +122,7 @@ class ComposerHooks
         // for development) to improve performance.
 
         if (!isset($_ENV['GLUED_PROD'])) {
-            $dotenv = \Dotenv\Dotenv::createImmutable(__ROOT__);
+            $dotenv = Dotenv::createImmutable(__ROOT__);
             $dotenv->safeLoad();
         }
         (!isset($_ENV['datapath'])) && die('[FAIL] datapath env variable not set' . PHP_EOL . PHP_EOL);
@@ -199,11 +197,11 @@ class ComposerHooks
                 }
 
                 // Unpack the data
-                $phar = new \PharData($data_file);
+                $phar = new PharData($data_file);
                 $pattern = '.mmdb';
                 foreach ($phar as $item) {
                     if ($item->isDir()) {
-                        $dir = new \PharData($item->getPathname());
+                        $dir = new PharData($item->getPathname());
                         foreach ($dir as $child) {
                             // loop over files in subdirectories present in the archive. If filename fits the $pattern, extract it. $child assumes the form of
                             // phar:///path/to/database/maxmind-geolite2-country.mmdb.tar.gz/GeoLite2-Country_20200609/GeoLite2-Country.mmdb

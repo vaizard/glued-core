@@ -168,9 +168,9 @@ routes:
     be_core_health_v1:
         pattern:    ${routes.be_core.path}/health/v1
         path:       ${routes.be_core.path}/health/v1
-        label:      Skeleton health
+        label:      Core health
         dscr:       A healthcheck endpoint for the microservice.
-        service:    skeleton
+        service:    core
         provides:   health
         methods:
             get:    Glued\Controllers\ServiceController:health
@@ -182,9 +182,9 @@ routes:
     be_core_routes_v1:
         pattern:    ${routes.be_core.path}/routes/v1
         path:       ${routes.be_core.path}/routes/v1
-        label:      Skeleton routes list
+        label:      Routes list
         dscr:       A route list endpoint for the microservice.
-        service:    skeleton
+        service:    core
         provides:   routes_list
         methods:
             get:    Glued\Controllers\ServiceController:routes_list

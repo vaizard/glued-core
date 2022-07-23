@@ -1,9 +1,9 @@
 <?php
 
+/** @noinspection PhpUndefinedVariableInspection */
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
-
 
 /**
  * Catch-all route to serve a a 204 options response
@@ -30,8 +30,3 @@ foreach ($settings['routes'] as $name => $leaf) {
 $app->map(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], '/{routes:.+}', function ($request, $response) {
     throw new HttpNotFoundException($request);
 })->setName('fallback_notfound');
-
-/*
-$app->get('/backend/auth', AdmController::class . ':stub')->setName('api.backend.auth');
-$app->get('/backend/py', AdmController::class . ':stub')->setName('api.backend.py');
-*/
