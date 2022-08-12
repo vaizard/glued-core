@@ -63,9 +63,9 @@ $container->set('settings', function () {
     // Initialize
     $class_sy = new Yaml;
     $class_ye = new YamlExpander(new NullLogger());
-    $ret      = [];
-    $routes   = [];
-    $seed     = [
+    $ret = [];
+    $routes = [];
+    $seed = [
         'hostname' => $_SERVER['SERVER_NAME'] ?? gethostbyname(php_uname('n')),
         'rootpath' => __ROOT__,
         'uservice' => basename(__ROOT__)
@@ -178,11 +178,11 @@ $container->set('enforcer', function (Container $c) {
 $container->set('oidc_adm', function (Container $c) {
     $s = $c->get('settings')['oidc'];
     $client = KeycloakClient::factory([
-        'baseUri'   => $s['server'],
-        'realm'     => $s['realm'],
+        'baseUri' => $s['server'],
+        'realm' => $s['realm'],
         'client_id' => $s['client']['admin']['id'],
-        'username'  => $s['client']['admin']['user'],
-        'password'  => $s['client']['admin']['pass']
+        'username' => $s['client']['admin']['user'],
+        'password' => $s['client']['admin']['pass']
     ]);
     return $client;
 });
@@ -191,7 +191,7 @@ $container->set('oidc_cli', function (Container $c) {
     $s = $c->get('settings')['oidc'];
     $issuer = (new IssuerBuilder())->build($s['uri']['discovery']);
     $clientMetadata = ClientMetadata::fromArray([
-        'client_id'     => $s['client']['confidential']['id'],
+        'client_id' => $s['client']['confidential']['id'],
         'client_secret' => $s['client']['confidential']['secret'],
         'token_endpoint_auth_method' => 'client_secret_basic', // the auth method to the token endpoint
         'redirect_uris' => $s['uri']['redirect']
@@ -231,14 +231,14 @@ $container->set('mailer', function (Container $c) {
 // ************************************************* 
 
 $container->set('auth', function (Container $c) {
-    return new Auth($c->get('settings'), 
-                    $c->get('db'), 
-                    $c->get('logger'), 
-                    $c->get('events'),
-                    $c->get('enforcer'),
-                    $c->get('fscache'),
-                    $c->get('utils')
-                );
+    return new Auth($c->get('settings'),
+        $c->get('db'),
+        $c->get('logger'),
+        $c->get('events'),
+        $c->get('enforcer'),
+        $c->get('fscache'),
+        $c->get('utils')
+    );
 });
 
 $container->set('utils', function (Container $c) {

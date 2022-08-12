@@ -58,7 +58,7 @@ $app->add(new MethodOverrideMiddleware);
 
 // Error handling middleware. This middleware must be added last. It will not handle
 // any exceptions/errors for middleware added after it.
-$jsonErrorHandler = function ($exception, $inspector, $run) {
+$jsonErrorHandler = function ($exception, $inspector) {
     global $settings;
     header("Content-Type: application/json");
     $r['code']    = $exception->getCode();
