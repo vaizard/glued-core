@@ -82,6 +82,13 @@ class ComposerHooks
 
         EOT;
 
+        echo "[INFO] Generating common server name." . PHP_EOL;
+        $output = <<<EOT
+        server_name {$settings['glued']['hostname']};
+        EOT;
+        file_put_contents('/etc/nginx/snippets/server/generated_name.conf', $comment.$output);
+
+
         echo "[INFO] Generating nginx csp headers." . PHP_EOL;
         $policy = CSPBuilder::fromData(json_encode($settings['nginx']['csp']));
         $policy->saveSnippet(
