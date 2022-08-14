@@ -2,7 +2,12 @@
 Core microservice for Glued
 
 ```
-add-apt-repository ppa:ondrej/nginx-mainline -y
+# Ubuntu is really slow on backporting fixes. We use sury
+LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y
+LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/nginx-mainline -y
+apt update
+
+
 apt install nginx libnginx-mod-http-headers-more-filter php php-fpm php-apcu php-bcmath php-curl php-gd php-gmp php-imap php-json php-mbstring php-mysqli php-readline php-soap php-xml apache2-utils composer git mysql-server
 systemctl start php8.1-fpm
 systemctl start nginx
