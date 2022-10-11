@@ -81,7 +81,8 @@ nginx:
         ssl_stapling: off
         ssl_stapling_verify: off
     cors:
-        origin: ${glued.hostname}
+        origin:
+            - ${glued.protocol}${glued.hostname}
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
         headers.allow: ["Authorization", "If-Match", "If-Unmodified-Since", "DNT", "Keep-Alive", "User-Agent", "X-CustomHeader", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Content-Range", "Content-Length" ]
         headers.expose: [ "Etag" ]
