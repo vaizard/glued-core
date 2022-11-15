@@ -37,14 +37,6 @@ routes:
     # CORE / STATUS                                         #
     #########################################################
     
-    fe_core_status_phpinfo:
-        pattern:    /core/status/phpinfo
-        path:       /core/status/phpinfo
-        label:      Phpinfo()
-        dscr:       Returns phpinfo().
-        methods:
-            get:    Glued\Controllers\FeController:render_phpinfo
-            post:   Glued\Controllers\FeController:render_phpinfo
     be_core_status_phpconst_v1:
         pattern:    ${routes.be_core.path}/status/phpconst/v1
         path:       ${routes.be_core.path}/status/phpconst/v1
@@ -91,7 +83,7 @@ routes:
         dscr:       Returns /proc information from the host.
         service:    core
         methods:
-            get:    Glued\Controllers\AdmController:sysinfo
+            get:    Glued\Controllers\StatusController:sysinfo
     be_core_status_config_v1:
         pattern:    ${routes.be_core.path}/status/config/v1
         path:       ${routes.be_core.path}/status/config/v1

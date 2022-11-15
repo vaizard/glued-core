@@ -17,6 +17,13 @@ db:
     charset:    utf8mb4
     collation:  utf8mb4_unicode_ci
 
+sqlsrv:
+    hostname:   ${env.sqlsrv_hostname}
+    database:   ${env.sqlsrv_database}
+    username:   ${env.sqlsrv_username}
+    password:   ${env.sqlsrv_password}
+
+
 logger:
     name:       ${glued.uservice}
     path:       ${glued.datapath}/${glued.uservice}/cache/main.log

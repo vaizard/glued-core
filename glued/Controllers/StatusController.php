@@ -121,6 +121,11 @@ class StatusController extends AbstractController
      */
     public function reflect_request(Request $request, Response $response, array $args = []): Response {
         $data = getallheaders();
+        $data['http']['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'] ?? '';
+        $data['http']['REMOTE_PORT'] = $_SERVER['REMOTE_PORT'] ?? '';
+        $data['http']['REMOTE_USER'] = $_SERVER['REMOTE_USER'] ?? '';
+        $data['http']['REMOTE_X-FORWARDED-FOR'] = $_SERVER['X-FORWARDED-FOR'] ?? '';
+        $data['http']['REMOTE_X-REAL-IP'] = $_SERVER['X-REAL-IP'] ?? '';
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
