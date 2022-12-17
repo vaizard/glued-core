@@ -47,6 +47,7 @@ nginx:
             self: true
             allow:
                 - ${glued.protocol}${glued.hostname}
+            unsafe-inline: true
         script-src:
             self: true
             allow:
@@ -54,6 +55,7 @@ nginx:
                 - ${glued.protocol}${glued.identity}
             strict-dynamic: false
             unsafe-eval: false
+            unsafe-inline: true
         object-src:
             self: true
         media-src:

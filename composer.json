@@ -38,6 +38,7 @@
     "nesbot/carbon": "^2",
     "nyholm/psr7": "^1",
     "opis/json-schema": "^2",
+    "paragonie/csp-builder": "^2.6",
     "php-di/php-di": "^6",
     "php-http/guzzle7-adapter": "^1",
     "php-http/message": "^1",
@@ -56,9 +57,8 @@
     "vaizard/glued-lib": "dev-main",
     "vlucas/phpdotenv": "^5",
     "voku/anti-xss": "^4",
-    "zeuxisoo/slim-whoops": "^0.7",
     "web-token/jwt-framework": "^2.2",
-    "paragonie/csp-builder": "^2.6"
+    "zeuxisoo/slim-whoops": "^0.7"
   },
   "require-dev": {
     "ergebnis/composer-normalize": "^2"
@@ -84,6 +84,16 @@
     }
   },
   "scripts": {
+    "post-install-cmd": [
+      "composer migrate",
+      "composer configure || echo \"[FAIL] Failed to configure glued. Please make sure all env variables are set. Rerun composer configure.\"",
+      "echo \"Run 'composer nginx' manually to pick restart this microservice\""
+    ],
+    "post-update-cmd": [
+      "composer migrate",
+      "composer configure || echo \"[FAIL] Failed to configure glued. Please make sure all env variables are set. Rerun composer configure.\"",
+      "echo \"Run 'composer nginx' manually to pick restart this microservice\""
+    ],
     "backup": [
       "vendor/vaizard/glued-lib/src/Scripts/backup.sh"
     ],
@@ -103,15 +113,8 @@
       "Glued\\Lib\\ComposerHooks::generateNginx",
       "vendor/vaizard/glued-lib/src/Scripts/nginx-reload.sh"
     ],
-    "post-install-cmd": [
-      "composer migrate",
-      "composer configure || echo \"[FAIL] Failed to configure glued. Please make sure all env variables are set. Rerun composer configure.\"",
-      "echo \"Run 'composer nginx' manually to pick restart this microservice\""
-    ],
-    "post-update-cmd": [
-      "composer migrate",
-      "composer configure || echo \"[FAIL] Failed to configure glued. Please make sure all env variables are set. Rerun composer configure.\"",
-      "echo \"Run 'composer nginx' manually to pick restart this microservice\""
+    "react": [
+      "glued/Config/React/deploy.sh"
     ],
     "settings": [
       "Glued\\Lib\\ComposerHooks::PrintSettings"

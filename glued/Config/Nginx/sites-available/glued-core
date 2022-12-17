@@ -31,12 +31,37 @@ server {
         ##########################
 
         # Main locations
-        include snippets/common/location-main.conf;
+        # while all other us include the main-location.conf
+        # snippet, glued-core needs to handle things differently.
 
-        # Auth test location before php match
-        location /api/ {
+
+        # Match all paths except for:
+        # - /api/* (handled below)
+        # - exact locations (defined most likely exclusively by glued-adm)
+        # Intended to serve the react frontend, leaving routing to it.
+        # Also no authorization rules are applied.
+        location / {
+                try_files $uri $uri/ /index.html?is_args$args;
+        }
+
+
+        # Match all /api/* paths. Auth test location subrequest
+        # is performed before php matches and executes.
+        location /api {
                 include snippets/common/auth-subrequest.conf;
                 try_files $uri $uri/ /index.php$is_args$args;
+        }
+
+        # Handle favicon.ico
+        location = /favicon.ico {
+                log_not_found off;
+                access_log    off;
+        }
+
+        # Handle robots.txt
+        location = /robots.txt {
+                log_not_found off;
+                access_log    off;
         }
 
         ##########################

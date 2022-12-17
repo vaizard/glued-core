@@ -10,3 +10,5 @@ yarn.lock
 yarn-error.log
 *~
 *.mo
+public/*
+!public/index.php
