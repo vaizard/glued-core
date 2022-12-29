@@ -48,6 +48,7 @@ class ServiceController extends AbstractController
                 'status' => 'OK',
                 'params' => $params,
                 'service' => basename(__ROOT__),
+                'provided-for' => $_SERVER['HTTP_X-GLUED-AUTH-UUID'] ?? 'anon'
             ];
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }

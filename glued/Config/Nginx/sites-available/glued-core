@@ -58,12 +58,6 @@ server {
                 try_files $uri $uri/ /index.php$is_args$args;
         }
 
-        # Don't involve authentication subrequest on auth tests
-        location /api/core/auth/test {
-                try_files $uri $uri/ /index.php$is_args$args;
-        }
-
-
         # Handle favicon.ico
         location = /favicon.ico {
                 log_not_found off;
