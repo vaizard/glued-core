@@ -52,6 +52,13 @@ server {
                 try_files $uri $uri/ /index.php$is_args$args;
         }
 
+        # Match all /internal/* paths. Internal paths are used
+        # solely for internal subrequests.
+        location /internal {
+                try_files $uri $uri/ /index.php$is_args$args;
+        }
+
+
         # Handle favicon.ico
         location = /favicon.ico {
                 log_not_found off;
@@ -85,6 +92,8 @@ server {
             proxy_set_header           X-Original-Method $request_method;
             proxy_ssl_protocols        TLSv1.3;
         }
+
+
 
         include snippets/location/*;
 
