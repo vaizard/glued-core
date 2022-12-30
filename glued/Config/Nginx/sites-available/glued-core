@@ -41,7 +41,7 @@ server {
         # Intended to serve the react frontend, leaving routing to it.
         # Also no authorization rules are applied.
         location / {
-                try_files $uri $uri/ /index.html?is_args$args /index.php$is_args$args;
+                try_files $uri $uri/ /index.html /index.php$is_args$args;
         }
 
 
