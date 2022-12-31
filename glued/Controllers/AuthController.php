@@ -8,7 +8,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 class AuthController extends AbstractController
 {
 
-   /**
+    /**
     * Provides an authentication and authorization endpoint for the nginx auth subrequest.
     * Enforces according to $_SERVER['HTTP_X_ORIGINAL_URI']
     * @param  Request  $request
@@ -19,12 +19,10 @@ class AuthController extends AbstractController
     */
     public function enforce(Request $request, Response $response, array $args = []): Response {
         // Initialize
-        $data = [];
-
-
-        $this->logger->info("core.auth.enforce start");
+        //return $response->withStatus(403)->withHeader('Content-Length', 0);
+        $this->logger->info("auth.enforce start");
         $val = array_key_exists('HTTP_X_ORIGINAL_URI', $_SERVER) ? $_SERVER['HTTP_X_ORIGINAL_URI'] : 'undefined';
-        $this->logger->debug("core.auth.enforce", [ "HTTP_X_ORIGINAL_URI" => $val ]);
+        $this->logger->debug("auth.enforce", [ "HTTP_X_ORIGINAL_URI" => $val ]);
 
         //$this->logger->warn("Auth subrequest start");
         // Handle direct access / server misconfiguration
@@ -38,7 +36,7 @@ class AuthController extends AbstractController
         // unless explicitly allowed" behavior.
 
         if ((!array_key_exists('HTTP_X_ORIGINAL_URI', $_SERVER)) or (!array_key_exists('HTTP_X_ORIGINAL_METHOD', $_SERVER))) {
-            $this->logger->error("core.auth.enforce / Direct access to internal API.");
+            $this->logger->error("auth.enforce / Direct access to internal API.");
             return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_MESSAGE', 'Auth backend is mad.');
         }
 
@@ -47,7 +45,7 @@ class AuthController extends AbstractController
         if ($_SERVER['HTTP_X_ORIGINAL_METHOD'] === 'OPTIONS') {
             return $response->withStatus(200)->withHeader('Content-Length', 0);
         }
-        $this->logger->debug("core.auth.enforce", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'] ]);
+        $this->logger->debug("auth.enforce", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'] ]);
 
         // Authenticate
         // Authentication tests the validity of the access token provided by the
@@ -60,27 +58,29 @@ class AuthController extends AbstractController
                 accesstoken: $this->auth->fetch_token($request),
                 certs: $this->auth->get_jwks($this->settings['oidc'])
             );
+            $this->logger->debug("auth.enforce", [ "TOKEN" => $token ]);
+            $this->logger->debug("auth.enforce", [ "Claims.subj" => $token['claims']['sub'] ]);
             $user = $this->auth->getuser($token['claims']['sub']);
+            $this->logger->debug("auth.enforce", [ "USER" => $user ]);
             if (!$user) { $this->auth->adduser($token['claims']); }
 
         } catch (\Exception $e) {
-            $this->logger->error( 'core.auth.enforce authentication failed', [ $e->getMessage() ]);
+            $this->logger->error( 'auth.enforce authentication failed', [ $e->getMessage() ]);
+            //return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_MESSAGE', $e->getMessage());
         }
 
-        $this->logger->error( 'core.auth.enforce authenticated as', [ "X-GLUED-AUTH-UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
+        $this->logger->error( 'auth.enforce authenticated as', [ "X-GLUED-AUTH-UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
 
 
         // Authorization: provide hardcoded responses for test routes
         if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_pass_v1']['path']) {
-            $this->logger->debug("core.auth.enforce hardcoded pass", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
-            return $response->withJson($data)->withStatus(200)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? 'anonymous');
+            $this->logger->debug("auth.enforce hardcoded pass", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
+            //return $response->withStatus(200)->withHeader('Content-Length', 0)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? 'anonymous');
         }
         if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail_v1']['path']) {
-            $this->logger->debug("core.auth.enforce hardcoded fail", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
-            return $response->withJson($data)->withStatus(403)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? 'anonymous');
+            $this->logger->debug("auth.enforce hardcoded fail", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
+            return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? 'anonymous');
         }
-
-
 
         // Authorization
         // TODO add CASBIN authorization code here
@@ -119,6 +119,8 @@ class AuthController extends AbstractController
         return $response->withJson([
             'message' => 'fail',
             'request' => $request->getMethod()
-        ]);    }
+        ]);
+
+    }
 
 }

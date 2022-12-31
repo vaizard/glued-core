@@ -41,7 +41,7 @@ server {
         # Intended to serve the react frontend, leaving routing to it.
         # Also no authorization rules are applied.
         location / {
-                try_files $uri $uri/ /index.html /index.php$is_args$args;
+                try_files $uri $uri/ /index.html;
         }
 
 
@@ -49,6 +49,10 @@ server {
         # is performed before php matches and executes.
         location /api {
                 include snippets/common/auth-subrequest.conf;
+                try_files $uri $uri/ /index.php$is_args$args;
+        }
+
+        location /internal {
                 try_files $uri $uri/ /index.php$is_args$args;
         }
 
