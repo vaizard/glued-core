@@ -70,6 +70,9 @@ class AuthController extends AbstractController
             $this->logger->debug("auth.enforce: db", [ "USER" => $user ]);
             if ($user === false) {
                 $this->logger->error( 'auth.enforce: adduser', [ "UUID" => $token['claims']['sub'] ]);
+                // TODO rework core_auth_user table to reference data from json
+                // TODO consider updating user info from id server - on login only?, cron job?
+                // TODO assign default domain, create one if none exists (call fomain getter/setter in adduser()
                 $this->auth->adduser($token['claims']);
             }
 
