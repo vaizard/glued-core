@@ -20,9 +20,12 @@ class AuthController extends AbstractController
     public function enforce(Request $request, Response $response, array $args = []): Response {
         // Initialize
         //return $response->withStatus(403)->withHeader('Content-Length', 0);
-        $this->logger->info("auth.enforce start");
+        $this->logger->info("auth.enforce: start");
         $val = array_key_exists('HTTP_X_ORIGINAL_URI', $_SERVER) ? $_SERVER['HTTP_X_ORIGINAL_URI'] : 'undefined';
-        $this->logger->debug("auth.enforce", [ "HTTP_X_ORIGINAL_URI" => $val ]);
+        $this->logger->debug("auth.enforce: orig", [
+            "HTTP_X_ORIGINAL_URI" => $val,
+            "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD']
+        ]);
 
         //$this->logger->warn("Auth subrequest start");
         // Handle direct access / server misconfiguration
@@ -36,16 +39,17 @@ class AuthController extends AbstractController
         // unless explicitly allowed" behavior.
 
         if ((!array_key_exists('HTTP_X_ORIGINAL_URI', $_SERVER)) or (!array_key_exists('HTTP_X_ORIGINAL_METHOD', $_SERVER))) {
-            $this->logger->error("auth.enforce / Direct access to internal API.");
+            $this->logger->error("auth.enforce: direct access to internal api.");
             return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_MESSAGE', 'Auth backend is mad.');
         }
 
         // Skip authorization on all OPTIONS requests,
         // return ALLOW (200).
         if ($_SERVER['HTTP_X_ORIGINAL_METHOD'] === 'OPTIONS') {
+            $this->logger->debug("auth.enforce: pass (options)");
             return $response->withStatus(200)->withHeader('Content-Length', 0);
         }
-        $this->logger->debug("auth.enforce", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'] ]);
+
 
         // Authenticate
         // Authentication tests the validity of the access token provided by the
@@ -58,11 +62,16 @@ class AuthController extends AbstractController
                 accesstoken: $this->auth->fetch_token($request),
                 certs: $this->auth->get_jwks($this->settings['oidc'])
             );
-            $this->logger->debug("auth.enforce", [ "TOKEN" => $token ]);
-            $this->logger->debug("auth.enforce", [ "Claims.subj" => $token['claims']['sub'] ]);
+            $this->logger->debug("auth.enforce: jwt", [
+                "ALL" => $token,
+                "SUB" => $token['claims']['sub']
+            ]);
             $user = $this->auth->getuser($token['claims']['sub']);
-            $this->logger->debug("auth.enforce", [ "USER" => $user ]);
-            if (!$user) { $this->auth->adduser($token['claims']); }
+            $this->logger->debug("auth.enforce: db", [ "USER" => $user ]);
+            if ($user === false) {
+                $this->logger->error( 'auth.enforce: adduser', [ "UUID" => $token['claims']['sub'] ]);
+                $this->auth->adduser($token['claims']);
+            }
 
         } catch (\Exception $e) {
             $this->logger->error( 'auth.enforce authentication failed', [ $e->getMessage() ]);
@@ -101,6 +110,15 @@ class AuthController extends AbstractController
      * @return Response Json result set.
      */
     public function say_pass(Request $request, Response $response, array $args = []): Response {
+        $uuid = "935ac614-96b2-4a80-8802-e2aee088dcae";
+
+        //echo "usr";
+        $user = $this->auth->getuser("935ac614-96b2-4a80-8802-e2aee088dcae");
+        //print_r($user);
+        $token = json_decode('{"claims":{"exp":1672585551,"iat":1672585251,"auth_time":1672584228,"jti":"9fc4698b-8292-4681-aec2-8b3b25a32a09","iss":"https://id.industra.space/auth/realms/t1","aud":["realm-management","new-client","account"],"sub":"935ac614-96b2-4a80-8802-e2aee088dcae","typ":"Bearer","azp":"new-client-2","session_state":"16f6fb40-8c7a-4d75-aa87-2bf33c622fd3","acr":"1","allowed-origins":["*"],"realm_access":{"roles":["offline_access","uma_authorization","realm-admin-role"]},"resource_access":{"realm-management":{"roles":["view-users","query-groups","query-users"]},"new-client":{"roles":["client-read-role"]},"account":{"roles":["manage-account","manage-account-links","view-profile"]}},"scope":"openid email profile","website":"https://vaizard.org","roles2":["offline_access","uma_authorization","realm-admin-role"],"email_verified":true,"name":"Pavel Stratl","groups":["/art","/art/bily-dum","/stage"],"preferred_username":"x","given_name":"Pavel","locale":"en","family_name":"Stratl","email":"pavel@industra.space"},"header":{"alg":"RS256","typ":"JWT","kid":"6EUClJ2T3fOE4LCGmrTrT7EPR8dzvEtIGBbuDkB8xME"}}', true);
+        //print_r($x);
+        $this->auth->adduser($token['claims']);
+        die();
         return $response->withJson([
             'message' => 'pass',
             'request' => $request->getMethod()
