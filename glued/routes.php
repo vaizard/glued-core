@@ -6,7 +6,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
 
 /**
- * Catch-all route to serve a a 204 options response
+ * Catch-all route to serve a 204 options response
  */
 $app->options('/{routes:.+}', function ($request, $response, $args) {
     return $response->withStatus(204);

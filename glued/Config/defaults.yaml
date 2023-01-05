@@ -3,25 +3,25 @@
 glued:
     timezone: Europe/Prague
     protocol: "https://"
-    hostname: ${env.hostname}
-    identity: ${env.identity}
-    rootpath: ${env.rootpath}
-    uservice: ${env.uservice}
-    datapath: ${env.datapath}
+    hostname: ${env.HOSTNAME}
+    identity: ${env.IDENTITY}
+    rootpath: ${env.ROOTPATH}
+    uservice: ${env.USERVICE}
+    datapath: ${env.DATAPATH}
 
 db:
-    host:       ${env.mysql_hostname}
-    database:   ${env.mysql_database}
-    username:   ${env.mysql_username}
-    password:   ${env.mysql_password}
+    host:       ${env.MYSQL_HOSTNAME}
+    database:   ${env.MYSQL_DATABASE}
+    username:   ${env.MYSQL_USERNAME}
+    password:   ${env.MYSQL_PASSWORD}
     charset:    utf8mb4
     collation:  utf8mb4_unicode_ci
 
 sqlsrv:
-    hostname:   ${env.sqlsrv_hostname}
-    database:   ${env.sqlsrv_database}
-    username:   ${env.sqlsrv_username}
-    password:   ${env.sqlsrv_password}
+    hostname:   ${env.SQLSRV_HOSTNAME}
+    database:   ${env.SQLSRV_DATABASE}
+    username:   ${env.SQLSRV_USERNAME}
+    password:   ${env.SQLSRV_PASSWORD}
 
 
 logger:
@@ -30,12 +30,12 @@ logger:
     level:      !php/const \Monolog\Logger::DEBUG
 
 smtp:
-    host:   ${env.smtp_host}
+    host:   ${env.SMTP_HOST}
     port:   465
     encr:   ssl
-    user:   ${env.smtp_user}
-    pass:   ${env.smtp_pass}
-    from:   ${env.smtp_from}
+    user:   ${env.SMTP_USER}
+    pass:   ${env.SMTP_PASS}
+    from:   ${env.SMTP_FROM}
     reconnect_after:  '100'
     reconnect_delay:  '15'
     throttle_count:   '50'
@@ -141,17 +141,17 @@ php:
 
 oidc:
     server: ${glued.protocol}${glued.identity}
-    realm: ${env.identity_realm}
+    realm: ${env.IDENTITY_REALM}
     client:
         admin:
-            id: ${env.identity_admin_id}
-            user: ${env.identity_admin_user}
-            pass: ${env.identity_admin_pass}
+            id: ${env.IDENTITY_ADMIN_ID}
+            user: ${env.IDENTITY_ADMIN_USER}
+            pass: ${env.IDENTITY_ADMIN_PASS}
         confidential:
-            id: ${env.identity_confidential_id}
-            secret: ${env.identity_confidential_secret}
+            id: ${env.IDENTITY_CONFIDENTIAL_ID}
+            secret: ${env.IDENTITY_CONFIDENTIAL_SECRET}
         public:
-            id: ${env.identity_public_id}
+            id: ${env.IDENTITY_PUBLIC_ID}
     uri:
         base:       ${oidc.server}/auth
         realm:      ${oidc.uri.base}/realms/${oidc.realm}

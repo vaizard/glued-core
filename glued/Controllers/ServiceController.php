@@ -31,7 +31,7 @@ class ServiceController extends AbstractController
      * @return Response Json result set.
      */
     public function stub(Request $request, Response $response, array $args = []): Response {
-        throw new \Exception('Stub method served where it shouldnt. Proxy misconfigured?');
+        throw new \Exception('Stub method served where it shouldn\'t. Proxy misconfigured?');
     }
 
     /**

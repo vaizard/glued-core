@@ -41,7 +41,7 @@ $container->set('events', function () {
 
 $container->set('fscache', function () {
     try {
-        $path = $_ENV['datapath'] . '/' . basename(__ROOT__) . '/cache/psr16';
+        $path = $_ENV['DATAPATH'] . '/' . basename(__ROOT__) . '/cache/psr16';
         CacheManager::setDefaultConfig(new ConfigurationOption([
             "path" => $path,
             "itemDetailedDate" => false,
@@ -66,13 +66,13 @@ $container->set('settings', function () {
     $ret = [];
     $routes = [];
     $seed = [
-        'hostname' => $_SERVER['SERVER_NAME'] ?? gethostbyname(php_uname('n')),
-        'rootpath' => __ROOT__,
-        'uservice' => basename(__ROOT__)
+        'HOSTNAME' => $_SERVER['SERVER_NAME'] ?? gethostbyname(php_uname('n')),
+        'ROOTPATH' => __ROOT__,
+        'USERVICE' => basename(__ROOT__)
     ];
 
     // Load and parse the yaml configs. Replace yaml references with $_ENV and $seed ($_ENV has precedence)
-    $files = __ROOT__ . '/glued/Config/defaults.yaml';
+    $files = __ROOT__ . '/vendor/vaizard/glued-lib/src/defaults.yaml';
     $yaml = file_get_contents($files);
     $array = $class_sy->parse($yaml, $class_sy::PARSE_CONSTANT);
     $refs['env'] = array_merge($seed, $_ENV);
