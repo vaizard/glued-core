@@ -134,7 +134,43 @@ class AuthController extends AbstractController
             'message' => 'fail: you should never see this message, a 403 error page should emit.',
             'request' => $request->getMethod()
         ]);
+    }
 
+
+    /**
+     * Returns all users (administrative endpoint).
+     * TODO minimize the number of authorized users able to see this endpoint.
+     * TODO provide a "list users" endpoint meant for regular users
+     * TODO rework the resulting json to meet up standard responses
+     * @param  Request  $request
+     * @param  Response $response
+     * @param  array    $args
+     * @return Response Json result set.
+     */
+    public function users_r1(Request $request, Response $response, array $args = []): Response {
+        $data = $this->auth->users();
+        return $response->withJson([
+            'data' => $data
+        ]);
+    }
+
+    /**
+     * Returns all users (administrative endpoint).
+     * TODO minimize the number of authorized users able to see this endpoint.
+     * TODO provide a "list domain" endpoint meant for regular users
+     * TODO join against users table to get username for primary_owner and all owners too.
+     * TODO consider duplicating user-domain relation in a specialized table
+     * TODO rework the resulting json to meet up standard responses
+     * @param  Request  $request
+     * @param  Response $response
+     * @param  array    $args
+     * @return Response Json result set.
+     */
+    public function domains_r1(Request $request, Response $response, array $args = []): Response {
+        $data = $this->auth->domains();
+        return $response->withJson([
+            'data' => $data
+        ]);
     }
 
 }

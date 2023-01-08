@@ -135,7 +135,7 @@ routes:
         dscr:       Api endpoint for managing users.
         service:    core
         methods:
-            get:    Glued\Controllers\ServiceController:stub
+            get:    Glued\Controllers\AuthController:users_r1
     be_core_auth_domains_v1:
         pattern:    ${routes.be_core.path}/auth/domains/v1
         path:       ${routes.be_core.path}/auth/domains/v1
@@ -143,7 +143,7 @@ routes:
         dscr:       Api endpoint for managing domains.
         service:    core
         methods:
-            get:    Glued\Controllers\ServiceController:stub
+            get:    Glued\Controllers\AuthController:domains_r1
     internal_core_auth_enforce_v1:
         pattern:    /internal/auth/v1
         path:       /internal/auth/v1
