@@ -5,8 +5,9 @@ DROP `c_account`,
 CHANGE `c_attr` `c_attr` json NULL COMMENT 'Account attributes and state (locale, enabled/disabled, GDPR anonymised, etc.)' AFTER `c_profile`,
 CHANGE `c_nick` `c_handle` varchar(255) COLLATE 'utf8mb4_0900_ai_ci' NOT NULL COMMENT 'User handle' AFTER `c_locale`;
 ALTER TABLE  `t_core_users`  DROP `c_stor_name`;
-ALTER TABLE `t_core_users` ADD `c_stor_name` varchar(255) GENERATED ALWAYS AS (`c_handle`) VIRTUAL COMMENT '[VIRTUAL] Stor name'
-ALTER TABLE `t_core_users` ADD INDEX `c_handle` (`c_handle`), DROP INDEX `c_nick`;
+ALTER TABLE `t_core_users` ADD `c_stor_name` varchar(255) GENERATED ALWAYS AS (`c_handle`) VIRTUAL COMMENT '[VIRTUAL] Stor name';
+ALTER TABLE `t_core_users` ADD INDEX `c_handle` (`c_handle`);
+ALTER TABLE `t_core_users` DROP INDEX `c_nick`;
 ALTER TABLE `t_core_domains` DROP `c_stor_name`;
 ALTER TABLE `t_core_domains` DROP `c_name`;
 ALTER TABLE `t_core_domains` ADD `c_name` varchar(255) GENERATED ALWAYS AS (c_json->>'$.name') VIRTUAL COMMENT '[VIRTUAL] Domain name' AFTER `c_json`;
