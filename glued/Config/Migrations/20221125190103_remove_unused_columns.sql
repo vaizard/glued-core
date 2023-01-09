@@ -10,6 +10,7 @@ ALTER TABLE `t_core_users` ADD INDEX `c_handle` (`c_handle`);
 ALTER TABLE `t_core_users` DROP INDEX `c_nick`;
 ALTER TABLE `t_core_domains` DROP `c_stor_name`;
 ALTER TABLE `t_core_domains` DROP `c_name`;
+ALTER TABLE `t_core_domains` DROP `c_nick`;
 ALTER TABLE `t_core_domains` ADD `c_name` varchar(255) GENERATED ALWAYS AS (c_json->>'$.name') VIRTUAL COMMENT '[VIRTUAL] Domain name' AFTER `c_json`;
 ALTER TABLE `t_core_domains` ADD`c_stor_name` varchar(255) GENERATED ALWAYS AS (`c_name`) VIRTUAL COMMENT '[VIRTUAL] Stor name';
 ALTER TABLE `t_core_domains` CHANGE `c_core_user` `c_primary_owner` binary(16) NOT NULL COMMENT 'Domain\'s primary owner (c_core_users.uuid)' AFTER `c_uuid`;

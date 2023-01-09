@@ -79,7 +79,7 @@ class AuthController extends AbstractController
             }
 
         } catch (\Exception $e) {
-            $this->logger->error( 'auth.enforce authentication failed', [ $e->getMessage() ]);
+            $this->logger->error( 'auth.enforce authentication failed', [ $e->getFile(), $e->getLine(), $e->getMessage(), $this->db->getLastQuery() ]);
             //return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_MESSAGE', $e->getMessage());
         }
 
