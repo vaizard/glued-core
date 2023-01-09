@@ -141,17 +141,34 @@ class AuthController extends AbstractController
      * Returns all users (administrative endpoint).
      * TODO minimize the number of authorized users able to see this endpoint.
      * TODO provide a "list users" endpoint meant for regular users
-     * TODO rework the resulting json to meet up standard responses
      * @param  Request  $request
      * @param  Response $response
      * @param  array    $args
      * @return Response Json result set.
      */
     public function users_r1(Request $request, Response $response, array $args = []): Response {
-        $data = $this->auth->users();
-        return $response->withJson([
-            'data' => $data
-        ]);
+        $rp = $request->getQueryParams();
+        $qp = null;
+        $qs = <<<EOT
+        select 
+                json_merge_preserve(
+                    json_object("uuid", bin_to_uuid( `c_uuid`, true)),
+                    json_object("handle",`c_handle`),
+                    json_object("profile", `c_profile`),
+                    json_object("attr",`c_attr`),
+                    json_object("created",`c_ts_created`),
+                    json_object("modified",`c_ts_modified`)
+                ) as res_rows
+        from `t_core_users`
+        EOT;
+        $qs = (new \Glued\Lib\QueryBuilder())->select($qs);
+        $wm = [
+            'handle' => '`c_handle` like ?'
+        ];
+        $this->utils->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
+        $res = $this->db->rawQuery($qs, $qp);
+        if (true) { $res['debug']['query'] = $this->db->getLastQuery(); }
+        return $this->utils->mysqlJsonResponse($response, $res);
     }
 
     /**
@@ -160,17 +177,27 @@ class AuthController extends AbstractController
      * TODO provide a "list domain" endpoint meant for regular users
      * TODO join against users table to get username for primary_owner and all owners too.
      * TODO consider duplicating user-domain relation in a specialized table
-     * TODO rework the resulting json to meet up standard responses
      * @param  Request  $request
      * @param  Response $response
      * @param  array    $args
      * @return Response Json result set.
      */
     public function domains_r1(Request $request, Response $response, array $args = []): Response {
-        $data = $this->auth->domains();
-        return $response->withJson([
-            'data' => $data
-        ]);
+        $rp = $request->getQueryParams();
+        $qp = null;
+        $qs = <<<EOT
+        select `c_json` as res_rows
+        from `t_core_domains`
+        EOT;
+        $qs = (new \Glued\Lib\QueryBuilder())->select($qs);
+        $wm = [
+            'root' => 'json_contains(`c_json`->>"$._root", ?)',
+            'name' => '`c_name` like ?'
+        ];
+        $this->utils->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
+        $res = $this->db->rawQuery($qs, $qp);
+        if (true) { $res['debug']['query'] = $this->db->getLastQuery(); }
+        return $this->utils->mysqlJsonResponse($response, $res);
     }
 
 }
