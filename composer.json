@@ -49,15 +49,14 @@
     "selective/transformer": "^1",
     "slim/http": "^1",
     "slim/slim": "^4",
-    "symfony/config": "^5",
+    "symfony/config": "^6",
     "symfony/mailer": "^6",
-    "symfony/yaml": "^5",
+    "symfony/yaml": "^6",
     "thingengineer/mysqli-database-class": "dev-master#42116651a88b57b03fd967bc57dd38f5094565d9",
-    "tuupola/slim-jwt-auth": "^3",
     "vaizard/glued-lib": "dev-main",
     "vlucas/phpdotenv": "^5",
     "voku/anti-xss": "^4",
-    "web-token/jwt-framework": "^2.2",
+    "web-token/jwt-framework": "^3",
     "zeuxisoo/slim-whoops": "^0.7"
   },
   "require-dev": {
@@ -80,7 +79,8 @@
   },
   "config": {
     "allow-plugins": {
-      "ergebnis/composer-normalize": true
+      "ergebnis/composer-normalize": true,
+      "php-http/discovery": true
     }
   },
   "scripts": {
