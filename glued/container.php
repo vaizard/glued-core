@@ -23,6 +23,9 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Logger;
 use Monolog\Processor\UidProcessor;
+use Monolog\Handler\TelegramBotHandler;
+use Monolog\Handler\FallbackGroupHandler;
+use Monolog\Handler\DeduplicationHandler;
 use Nyholm\Psr7\getParsedBody;
 use Opis\JsonSchema\Validator;
 use Phpfastcache\CacheManager;
@@ -70,13 +73,18 @@ $container->set('settings', function () {
         'ROOTPATH' => __ROOT__,
         'USERVICE' => basename(__ROOT__)
     ];
+    $refs['env'] = array_merge($seed, $_ENV);
 
     // Load and parse the yaml configs. Replace yaml references with $_ENV and $seed ($_ENV has precedence)
-    $files = __ROOT__ . '/vendor/vaizard/glued-lib/src/defaults.yaml';
-    $yaml = file_get_contents($files);
-    $array = $class_sy->parse($yaml, $class_sy::PARSE_CONSTANT);
-    $refs['env'] = array_merge($seed, $_ENV);
-    $ret = $class_ye->expandArrayProperties($array, $refs);
+    // TODO replicate foreach below to other microservices.
+    // TODO document in readme that no recursive array_merge is done and that you intentionally have to repeat defaults or alternatively use extensions such as 'overwrite' and 'append' to differentate and merge arrays recursively (or not) accordingly
+    $files[] = __ROOT__ . '/vendor/vaizard/glued-lib/src/defaults.yaml';
+    $files = array_merge($files, glob($refs['env']['DATAPATH'] . '/glued-stor/config/*.yaml'));
+    foreach ($files as $file) {
+        $yaml = file_get_contents($file);
+        $array = $class_sy->parse($yaml, $class_sy::PARSE_CONSTANT);
+        $ret = array_merge($ret, $class_ye->expandArrayProperties($array, $refs));
+    }
 
     // Read the routes
     $files = glob($ret['glued']['datapath'] . '/*/cache/routes.yaml');
@@ -90,13 +98,39 @@ $container->set('settings', function () {
     return $ret;
 });
 
-$container->set('logger', function (Container $c) {
+$container->set('logger', function (Container $c)
+{
+    // Create the main logger, add the UidProcessor to generate a unique id to each log record
     $settings = $c->get('settings')['logger'];
     $logger = new Logger($settings['name']);
     $processor = new UidProcessor();
     $logger->pushProcessor($processor);
-    $handler = new StreamHandler($settings['path'], $settings['level']);
+
+    // Create handler: stream to file
+    $handlers['stream'] = new StreamHandler($settings['path'], $settings['level']);
+    // Create handler: telegram
+    $tg = $c->get('settings')['notify']['network']['telegram'] ?? null;
+    if (!is_null($tg['channels'][0]['dsn'])) {
+        // Extract the query string from the DSN
+        $chatid = $tg['dst'][0];
+        $apikey = parse_url($tg['channels'][0]['dsn'], PHP_URL_USER) . ":" . parse_url($tg['channels'][0]['dsn'], PHP_URL_PASS);
+        // Create the TelegramBotHandler
+        $handlers['tg'] = new TelegramBotHandler(
+            apiKey: $apikey,
+            channel: $chatid,
+            level: $settings['level'],
+            parseMode: 'Markdown',
+            delayBetweenMessages: true
+        );
+    }
+
+    // Avoid app failure in case of logger failure (i.e. don't throw an exception if the stream logger path
+    // is not writable. Use telegram, e-mail, etc. Deduplicate same error messages to prevent worst spamming.
+    $handler = new FallbackGroupHandler($handlers);
+    $handler = new DeduplicationHandler($handler);
     $logger->pushHandler($handler);
+
+    if (!is_writable($settings['path'])) { $logger->error('Log path not writable.', [$settings['path']]); }
     return $logger;
 });
 
