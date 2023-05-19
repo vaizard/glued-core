@@ -18,9 +18,10 @@ class AuthController extends AbstractController
     * @return Response with a 200 or 403 code (allow/deny). Additional response headers
     *                  X_GLUED_AUTH_UUID and X_GLUED_MESSAGE can be set as well.
     */
-    public function enforce(Request $request, Response $response, array $args = []): Response {
-        // Initialize
-        //return $response->withStatus(403)->withHeader('Content-Length', 0);
+
+    public function enforce(Request $request, Response $response, array $args = []): Response
+    {
+        // Log uri and method
         $this->logger->info("auth.enforce: start");
         $u = array_key_exists('HTTP_X_ORIGINAL_URI', $_SERVER) ? $_SERVER['HTTP_X_ORIGINAL_URI'] : 'undefined';
         $m = array_key_exists('HTTP_X_ORIGINAL_METHOD', $_SERVER) ? $_SERVER['HTTP_X_ORIGINAL_METHOD'] : 'undefined';

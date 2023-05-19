@@ -9,7 +9,7 @@
     }
   ],
   "require": {
-    "php": "^8.1",
+    "php": "^8.2",
     "ext-apcu": "*",
     "ext-bcmath": "*",
     "ext-curl": "*",
@@ -28,19 +28,19 @@
     "geocoder-php/geoip2-provider": "^4",
     "google/apiclient": "^2",
     "grasmash/yaml-expander": "^3",
-    "guzzlehttp/psr7": "^1",
+    "guzzlehttp/psr7": "^2.5",
     "http-interop/http-factory-guzzle": "^1",
     "league/flysystem": "^3",
     "linfo/linfo": "^4",
     "middlewares/csp": "^3",
     "middlewares/trailing-slash": "^2",
     "mohammad-waleed/keycloak-admin-client": "^0",
-    "monolog/monolog": "^2",
+    "monolog/monolog": "^3",
     "nesbot/carbon": "^2",
     "nyholm/psr7": "^1",
     "opis/json-schema": "^2",
-    "paragonie/csp-builder": "^2.6",
-    "php-di/php-di": "^6",
+    "paragonie/csp-builder": "^2.8",
+    "php-di/php-di": "^7",
     "php-http/guzzle7-adapter": "^1",
     "psr/http-message": "^1",
     "phpfastcache/phpfastcache": "^9",
@@ -58,7 +58,8 @@
     "vlucas/phpdotenv": "^5",
     "voku/anti-xss": "^4",
     "web-token/jwt-framework": "^3",
-    "zeuxisoo/slim-whoops": "^0.7"
+    "zeuxisoo/slim-whoops": "^0.7",
+    "jacklul/monolog-telegram": "^3.0"
   },
   "require-dev": {
     "ergebnis/composer-normalize": "^2"
