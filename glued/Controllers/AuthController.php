@@ -127,24 +127,44 @@ class AuthController extends AbstractController
      * @return Response Json result set.
      */
     public function say_pass(Request $request, Response $response, array $args = []): Response {
+        $who = null;
+        $bearer = null;
+        $bearer_type = 'unknown';
         try {
             $bearer = $this->auth->fetch_token($request);
         } catch (\Exception $e) {
-            $msg = "Unauthenticated: Bearer token (Authorization header) missing.";
+            $bearer_type = 'none';
+            $msg = "Unauthenticated (bearer token missing).";
         }
 
-        $apiKey = $bearer;
-        if (!$apiKey) die ('no apikey');
-        if (!$apiKey || (str_starts_with($apiKey, $this->settings['glued']['apitoken']))) {
-            $tok = 'ok';
-        } else $tok = $this->settings['glued']['apitoken'];
+        if (!is_null($bearer)) {
+            try {
+                $who = $this->auth->validate_api_token($bearer);
+                $bearer_type = 'api';
+                $msg = "Authenticated (API).";
+            } catch (\Exception $e) {
+                $msg = $e->getMessage();
+                die($this->db->getLastQuery());
+            }
+        }
+
+        if (!is_null($bearer) and ($bearer_type != 'unknown')) {
+            try {
+                $oidc = $this->settings['oidc'];
+                $certs = $this->auth->get_jwks($oidc);
+                $who = $this->auth->validate_jwt_token($bearer, $certs);
+                $bearer_type = 'jwt';
+                $msg = "Authenticated (JWT).";
+            } catch (\Exception $e) {
+                $msg = $e->getMessage();
+            }
+        }
 
         return $response->withJson([
             'auth-bearer' => $bearer,
-            'auth-type' => $this->auth->validate_api_token($bearer),
-            'auth-t' => $tok,
-
-            'message' => 'passs',
+            'auth-type' => $bearer_type,
+            'auth-resp' => $who,
+            'message' => 'Pass: '. $msg,
             'request' => $request->getMethod()
         ]);
     }
@@ -159,7 +179,7 @@ class AuthController extends AbstractController
      */
     public function say_fail(Request $request, Response $response, array $args = []): Response {
         return $response->withJson([
-            'message' => 'fail: you should never see this message, a 403 error page should emit.',
+            'message' => 'Fail: you should never see this message, a 403 error page should emit.',
             'request' => $request->getMethod()
         ]);
     }
