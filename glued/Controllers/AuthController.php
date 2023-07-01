@@ -19,9 +19,18 @@ class AuthController extends AbstractController
     *                  X_GLUED_AUTH_UUID and X_GLUED_MESSAGE can be set as well.
     */
 
+
+
+
+
+
     public function enforce(Request $request, Response $response, array $args = []): Response
     {
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Log uri and method
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         $this->logger->info("auth.enforce: start");
         $u = array_key_exists('HTTP_X_ORIGINAL_URI', $_SERVER) ? $_SERVER['HTTP_X_ORIGINAL_URI'] : 'undefined';
         $m = array_key_exists('HTTP_X_ORIGINAL_METHOD', $_SERVER) ? $_SERVER['HTTP_X_ORIGINAL_METHOD'] : 'undefined';
@@ -30,38 +39,42 @@ class AuthController extends AbstractController
             "HTTP_X_ORIGINAL_METHOD" => $m
         ]);
 
-        //$this->logger->warn("Auth subrequest start");
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Handle direct access / server misconfiguration
-        // This method's route must be private, available exclusively to nginx
-        // for internal auth subrequests. To authorize a request to a resource
-        // nginx must be configured to subrequest this method with the resource
-        // url passed in the HTTP_X_ORIGINAL_URI header. If HTTP_X_ORIGINAL_URI
-        // then the nginx is misconfigured or the client managed to access the
-        // private-only route without nginx setting the HTTP_X_ORIGINAL_URI header
-        // In both cases, we just return a 403 response to ensure a "denied
-        // unless explicitly allowed" behavior.
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // This method's route must be private, available exclusively to nginx for internal auth subrequests. To
+        // authorize a request to a resource nginx must be configured to perform a subrequest to this method with the
+        // resource url passed in the HTTP_X_ORIGINAL_URI header. If HTTP_X_ORIGINAL_URI is not set, then nginx is
+        // misconfigured or the client managed to access the private-only route (without nginx setting the
+        // HTTP_X_ORIGINAL_URI header. In both cases, we just return a 403 response to achieve a `denied unless
+        // explicitly allowed` behavior.
 
         if ((!array_key_exists('HTTP_X_ORIGINAL_URI', $_SERVER)) or (!array_key_exists('HTTP_X_ORIGINAL_METHOD', $_SERVER))) {
             $this->logger->error("auth.enforce: direct access to internal api.");
             return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_MESSAGE', 'Auth backend is mad.');
         }
 
-        // Skip authorization on all OPTIONS requests,
-        // return ALLOW (200).
+        // Skip authorization on all OPTIONS requests (return a 200 response to achieve an `allow always` behavior).
         if ($_SERVER['HTTP_X_ORIGINAL_METHOD'] === 'OPTIONS') {
             $this->logger->debug("auth.enforce: pass (options)");
             return $response->withStatus(200)->withHeader('Content-Length', 0);
         }
 
 
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Authenticate
-        // Authentication tests the validity of the access token provided by the
-        // identity server. Token subject (user) is used to query t_core_users
-        // for additional user account data. If t_core_users doesn't have a match,
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // Authentication tests the validity of the access token provided by the identity server. Token subject (user)
+        // is used to query t_core_users for additional user account data. If t_core_users doesn't have a match,
         // subject's uuid is used to set up a valid user account.
 
         try {
-            $token = $this->auth->decode_token(
+
+
+            $token = $this->auth->validate_jwt_token(
                 accesstoken: $this->auth->fetch_token($request),
                 certs: $this->auth->get_jwks($this->settings['oidc'])
             );
@@ -73,9 +86,7 @@ class AuthController extends AbstractController
             $this->logger->debug("auth.enforce: db", [ "USER" => $user ]);
             if ($user === false) {
                 $this->logger->info( 'auth.enforce: adduser', [ "UUID" => $token['claims']['sub'] ]);
-                // TODO rework core_auth_user table to reference data from json
                 // TODO consider updating user info from id server - on login only?, cron job?
-                // TODO assign default domain, create one if none exists (call fomain getter/setter in adduser()
                 $this->auth->adduser($token['claims']);
             }
 
@@ -116,8 +127,24 @@ class AuthController extends AbstractController
      * @return Response Json result set.
      */
     public function say_pass(Request $request, Response $response, array $args = []): Response {
+        try {
+            $bearer = $this->auth->fetch_token($request);
+        } catch (\Exception $e) {
+            $msg = "Unauthenticated: Bearer token (Authorization header) missing.";
+        }
+
+        $apiKey = $bearer;
+        if (!$apiKey) die ('no apikey');
+        if (!$apiKey || (str_starts_with($apiKey, $this->settings['glued']['apitoken']))) {
+            $tok = 'ok';
+        } else $tok = $this->settings['glued']['apitoken'];
+
         return $response->withJson([
-            'message' => 'pass',
+            'auth-bearer' => $bearer,
+            'auth-type' => $this->auth->validate_api_token($bearer),
+            'auth-t' => $tok,
+
+            'message' => 'passs',
             'request' => $request->getMethod()
         ]);
     }

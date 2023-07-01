@@ -91,7 +91,7 @@ class StatusController extends AbstractController
         $oidc = $this->settings['oidc'];
         $certs = $this->auth->get_jwks($oidc);
         $accesstoken = $this->auth->fetch_token($request);
-        $arr = $this->auth->decode_token($accesstoken, $certs); // TODO optimize in glued-lib by rewriting with JWSLoaderFactory()
+        $arr = $this->auth->validate_jwt_token($accesstoken, $certs); // TODO optimize in glued-lib by rewriting with JWSLoaderFactory()
         return $response->withJson($arr, options: JSON_UNESCAPED_SLASHES);
     }
 
@@ -108,7 +108,7 @@ class StatusController extends AbstractController
         $oidc = $this->settings['oidc'];
         $certs = $this->auth->get_jwks($oidc);
         $accesstoken = $this->auth->fetch_token($request);
-        $arr = $this->auth->decode_token($accesstoken, $certs);
+        $arr = $this->auth->validate_jwt_token($accesstoken, $certs);
         $arr['users'] = $this->auth->users();
         return $response->withJson($arr, options: JSON_UNESCAPED_SLASHES);
     }
