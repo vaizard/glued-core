@@ -10,6 +10,7 @@ use Facile\OpenIDClient\Client\Metadata\ClientMetadata;
 use Facile\OpenIDClient\Issuer\IssuerBuilder;
 use Facile\OpenIDClient\Service\Builder\AuthorizationServiceBuilder;
 use Glued\Lib\Auth;
+use Glued\Lib\Crypto;
 use Glued\Lib\Exceptions\InternalException;
 use Glued\Lib\Utils;
 use Goutte\Client;
@@ -286,7 +287,7 @@ $container->set('stor', function (Container $c) {
 */
 
 $container->set('crypto', function () {
-    return new Glued\Classes\Crypto\Crypto();
+    return new Crypto();
 });
 
 $container->set('reqfactory', function () {
