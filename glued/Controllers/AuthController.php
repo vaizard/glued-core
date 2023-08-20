@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Glued\Controllers;
 
+use Glued\Lib\QuerySelect;
 use mysql_xdevapi\Exception;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -73,7 +74,6 @@ class AuthController extends AbstractController
 
         try {
 
-
             $token = $this->auth->validate_jwt_token(
                 accesstoken: $this->auth->fetch_token($request),
                 certs: $this->auth->get_jwks($this->settings['oidc'])
@@ -118,6 +118,20 @@ class AuthController extends AbstractController
         return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_AUTH_UUID', $token['claims']['sub'] ?? 'anonymous');
     }
 
+
+    /**
+     * Return the authentication status'. The AuthController::enforce() has a hardcoded
+     * positive (200) response for the route with AuthController::say_pass() method.
+     * @param  Request  $request
+     * @param  Response $response
+     * @param  array    $args
+     * @return Response Json result set.
+     */
+    public function say_status(Request $request, Response $response, array $args = []): Response
+    {
+    }
+
+
    /**
      * Always returns 'pass'. The AuthController::enforce() has a hardcoded 
      * positive (200) response for the route with AuthController::say_pass() method.
@@ -127,8 +141,10 @@ class AuthController extends AbstractController
      * @return Response Json result set.
      */
     public function say_pass(Request $request, Response $response, array $args = []): Response {
+        $route = $request->getQueryParams()['route'] ?? '';
         $who = null;
         $bearer = null;
+        $user = null;
         $bearer_type = 'unknown';
         try {
             $bearer = $this->auth->fetch_token($request);
@@ -142,22 +158,48 @@ class AuthController extends AbstractController
                 $who = $this->auth->validate_api_token($bearer);
                 $bearer_type = 'api';
                 $msg = "Authenticated (API).";
+                $user = $who['user_uuid'];
             } catch (\Exception $e) {
                 $msg = $e->getMessage();
-                die($this->db->getLastQuery());
             }
         }
 
-        if (!is_null($bearer) and ($bearer_type != 'unknown')) {
+        if (!is_null($bearer) and ($bearer_type == 'unknown')) {
             try {
                 $oidc = $this->settings['oidc'];
                 $certs = $this->auth->get_jwks($oidc);
                 $who = $this->auth->validate_jwt_token($bearer, $certs);
                 $bearer_type = 'jwt';
                 $msg = "Authenticated (JWT).";
+                $user = $this->auth->getuser($who['claims']['sub']);
             } catch (\Exception $e) {
                 $msg = $e->getMessage();
             }
+        }
+
+        $routeName = '';
+        $routeParsed = parse_url($route);
+        $routeNormalized = rtrim($routeParsed['path'],'/');
+        parse_str(isset($routeParsed['query']) ? $routeParsed['query'] : '', $routeParams);
+
+        foreach ($this->settings['routes'] as $n=>$r) {
+            if ($r['path'] === $routeNormalized) {
+                $routeName = $n;
+            }
+        }
+
+        $enf = $this->enforcer;
+        try {
+            $enf->addNamedGroupingPolicy('g2', ['system', '*']); // domain 'system' is parent to domain(s) '*'
+            $enf->addNamedGroupingPolicy('g2', ['system', '*']); //
+            //$b = $enf->savePolicy();
+            $a = $enf->addNamedGroupingPolicy('g2', ['b', 'c']);
+            //$b = $enf->savePolicy();
+            $a = $enf->addNamedGroupingPolicy('g2', ['c', (string) 'd']);
+            $b = $enf->savePolicy();
+        } catch (\Exception $e) {
+            if ($e->getCode() == "23000" && get_class($e) == "PDOException") {}
+            else throw new \Exception(previous: $e);
         }
 
         return $response->withJson([
@@ -165,8 +207,15 @@ class AuthController extends AbstractController
             'auth-type' => $bearer_type,
             'auth-resp' => $who,
             'message' => 'Pass: '. $msg,
-            'request' => $request->getMethod()
+            'request' => $request->getMethod(),
+            'route' => $route,
+            'route-normalized' => $routeNormalized,
+            'route-params' => $routeParams,
+            'route-match' => $routeName,
+            'user' => $user
         ]);
+
+
     }
 
    /**
@@ -194,6 +243,77 @@ class AuthController extends AbstractController
      * @param  array    $args
      * @return Response Json result set.
      */
+    public function users_r0(Request $request, Response $response, array $args = []): Response {
+        $rp = $request->getQueryParams();
+        $qp = null;
+        $qs = <<<EOT
+        select 
+                json_merge_preserve(
+                    json_object("uuid", bin_to_uuid( `c_uuid`, true)),
+                    json_object("handle",`c_handle`),
+                    json_object("profile", `c_profile`),
+                    json_object("attr",`c_attr`),
+                    json_object("created",`c_ts_created`),
+                    json_object("modified",`c_ts_updated`)
+                ) as res_rows
+        from `t_core_users`
+        EOT;
+        $qs = (new \Glued\Lib\QueryBuilder())->select($qs);
+        $wm = [
+            'handle' => '`c_handle` like ?'
+        ];
+
+        $this->utils->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
+        echo vsprintf(str_replace('?', "'%s'", $qs), $qp);
+        return $response;
+        $res = $this->db->rawQuery($qs, $qp);
+        if (true) { $res['debug']['query'] = $this->db->getLastQuery(); }
+        return $this->utils->mysqlJsonResponse($response, $res);
+        /*return $response->withJson($this->auth->users());*/
+    }
+
+
+    function mysqlJsonQueryFromRequest(array $reqparams, QuerySelect &$qstring, &$qparams, array $wheremods = []) {
+
+        // define fallback where modifier for the 'uuid' reqparam.
+        if (!array_key_exists('uuid', $wheremods)) {
+            $wheremods['uuid'] = 'c_uuid = uuid_to_bin( ? , true)';
+        }
+
+        foreach ($reqparams as $key => $val) {
+
+            // if request parameter name ($key) doesn't validate, skip to next
+            // foreach item, else replace _ with . in $key to get a valid jsonpath
+            if ($this->reqParamToJsonPath($key) === false) { continue; }
+
+            // to correctly construct the jsonpath, independent on the $key
+            // containing a hypen or not, each $key must be encapsulated with quotes
+            // 'some_hypen-path' -> 'some.hypen-path' -> '"some"."hypen-path"'
+            $jsonpath = '\"'.str_replace('.', '\".\"', $key).'\"';
+            // default where construct that transposes https://server/endpoint?mykey=myval
+            // to sql query substring `where (`c_data`->>'$."mykey"' = ?)`
+            $w = '(`c_data`->>"$.'.$jsonpath.'" = ?)';
+
+            foreach ($wheremods as $wmk => $wmv) {
+                if ($key === $wmk) { $w = $wmv; }
+            }
+
+            if (is_array($val)) {
+                foreach ($val as $v) {
+                    $qstring->where($w);
+                    $qparams[] = $v;
+                }
+            } else {
+                $qstring->where($w);
+                $qparams[] = $val;
+            }
+        }
+
+        // envelope in json_arrayagg to return a single row with the complete result
+        $qstring = "select json_arrayagg(res_rows) from ( $qstring ) as res_json";
+    }
+
+
     public function users_r1(Request $request, Response $response, array $args = []): Response {
         $rp = $request->getQueryParams();
         $qp = null;
@@ -205,7 +325,7 @@ class AuthController extends AbstractController
                     json_object("profile", `c_profile`),
                     json_object("attr",`c_attr`),
                     json_object("created",`c_ts_created`),
-                    json_object("modified",`c_ts_modified`)
+                    json_object("updated",`c_ts_updated`)
                 ) as res_rows
         from `t_core_users`
         EOT;
@@ -213,13 +333,31 @@ class AuthController extends AbstractController
         $wm = [
             'handle' => '`c_handle` like ?'
         ];
+
         $this->utils->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
+        echo vsprintf(str_replace('?', "'%s'", $qs), $qp);
+        return $response;
         $res = $this->db->rawQuery($qs, $qp);
         if (true) { $res['debug']['query'] = $this->db->getLastQuery(); }
         return $this->utils->mysqlJsonResponse($response, $res);
+        /*return $response->withJson($this->auth->users());*/
     }
 
-    /**
+
+
+    public function roles_c1(Request $request, Response $response, array $args = []): Response
+    {
+        $rp = $request->getQueryParams();
+        if (($rp['name'] ?? '') !== '' && is_string($rp['name'])) {
+            $res = $this->auth->addrole($rp['name'], $rp['description'] ?? '');
+            return $response->withJson($res);
+        } else {
+            throw new \Exception('Provide `name` and optionally `description`.', 400);
+        }
+    }
+
+
+        /**
      * Returns all users (administrative endpoint).
      * TODO minimize the number of authorized users able to see this endpoint.
      * TODO provide a "list domain" endpoint meant for regular users
@@ -234,7 +372,7 @@ class AuthController extends AbstractController
         $rp = $request->getQueryParams();
         $qp = null;
         $qs = <<<EOT
-        select `c_json` as res_rows
+        select `c_attr` as res_rows
         from `t_core_domains`
         EOT;
         $qs = (new \Glued\Lib\QueryBuilder())->select($qs);

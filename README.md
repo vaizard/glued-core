@@ -51,3 +51,18 @@ mysql -e "GRANT ALL PRIVILEGES ON glued.* TO 'glued'@'%';"
 mysql -e "GRANT SUPER ON *.* TO 'glued'@'%';"
 mysql -e "FLUSH PRIVILEGES;"
 ```
+
+## Coding style
+
+### Naming conventions
+
+
+
+| Convention | JSON path     | PHP Class names | PHP method names | URIs      | Database tables/columns |
+|------------|---------------|-----------------|------------------|-----------|-------------------------|
+| camelCase  | supported     |                 | supported        |           | tolerated               |
+| PascalCase | supported     | preferred       |                  |           |                         |
+| snake_case | unsupported*) |                 |                  |           | preferred               |
+| kebab-case | preferred     |                 | preferred        | preferred |                         |
+
+*) the underscore will be 

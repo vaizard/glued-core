@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use Alcohol\ISO4217;
+use CasbinAdapter\Database\Adapter as DatabaseAdapter;
 use Casbin\Enforcer;
 use Casbin\Util\BuiltinOperations;
 use DI\Container;
@@ -188,17 +189,25 @@ $container->set('responsefactory', $app->getResponseFactory());
  */
 $container->set('enforcer', function (Container $c) {
     $s = $c->get('settings');
-    $adapter = __ROOT__ . '/private/cache/casbin.csv';
-    /*
-    if ($s['casbin']['adapter'] == 'database')
+    $logger = $c->get('logger');
+
+    $s['casbin']['adapter'] = 'database';
+    if ($s['casbin']['adapter'] == 'database') {
         $adapter = DatabaseAdapter::newAdapter([
-            'type'     => 'mysql',
+            'type' => 'mysql',
             'hostname' => $s['db']['host'],
             'database' => $s['db']['database'],
             'username' => $s['db']['username'],
             'password' => $s['db']['password'],
             'hostport' => '3306',
-        ]);*/
+        ]);
+    } elseif ($s['casbin']['adapter'] == 'file') {
+        $adapter = $s['glued']['datapath'] . '/glued-core/cache/casbin.csv';
+        if (!is_writable($adapter)) { $logger->error('Enforcer adapter not writable.', [$adapter]); }
+    } else {
+        $logger->error('Enforcer adapter misconfigured.', [$s['casbin']['adapter']]);
+    }
+
     $e = new Enforcer($s['casbin']['modelconf'], $adapter);
 
     $e->addNamedMatchingFunc('g', 'keyMatch2', function (string $key1, string $key2) {
@@ -207,6 +216,8 @@ $container->set('enforcer', function (Container $c) {
     $e->addNamedDomainMatchingFunc('g', 'keyMatch2', function (string $key1, string $key2) {
         return BuiltinOperations::keyMatch2($key1, $key2);
     });
+
+
     return $e;
 });
 
@@ -272,7 +283,8 @@ $container->set('auth', function (Container $c) {
         $c->get('events'),
         $c->get('enforcer'),
         $c->get('fscache'),
-        $c->get('utils')
+        $c->get('utils'),
+        $c->get('crypto')
     );
 });
 

@@ -23,7 +23,8 @@
     "ext-soap": "*",
     "ext-xml": "*",
     "ext-zip": "*",
-    "casbin/database-adapter": "^1",
+    "casbin/casbin": "^3",
+    "casbin/database-adapter": "^1.8",
     "facile-it/php-openid-client": "dev-master",
     "geocoder-php/geoip2-provider": "^4",
     "grasmash/yaml-expander": "^3",
@@ -96,7 +97,7 @@
     "post-update-cmd": [
       "composer migrate",
       "composer configure || echo \"[FAIL] Failed to configure glued. Please make sure all env variables are set. Rerun composer configure.\"",
-      "patch vendor/monolog/monolog/src/Monolog/Logger.php < glued/Config/Patches/Logger.patch",
+      "patch -s --reject-file=/dev/null -p1 vendor/monolog/monolog/src/Monolog/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch",
       "echo \"Run 'composer nginx' manually to pick restart this microservice\""
     ],
     "backup": [

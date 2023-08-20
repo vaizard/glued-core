@@ -136,6 +136,15 @@ routes:
         service:    core
         methods:
             get:    Glued\Controllers\AuthController:users_r1
+    be_core_auth_roles_v1:
+        pattern:    ${routes.be_core.path}/auth/roles/v1
+        path:       ${routes.be_core.path}/auth/roles/v1
+        label:      Manage roles
+        dscr:       Api endpoint for managing roles.
+        service:    core
+        methods:
+            get:    Glued\Controllers\AuthController:roles_r1
+            post:   Glued\Controllers\AuthController:roles_c1
     be_core_auth_domains_v1:
         pattern:    ${routes.be_core.path}/auth/domains/v1
         path:       ${routes.be_core.path}/auth/domains/v1
