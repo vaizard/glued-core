@@ -335,15 +335,46 @@ class AuthController extends AbstractController
         ];
 
         $this->utils->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
-        echo vsprintf(str_replace('?', "'%s'", $qs), $qp);
-        return $response;
+        //echo vsprintf(str_replace('?', "'%s'", $qs), $qp);
+        //return $response;
         $res = $this->db->rawQuery($qs, $qp);
         if (true) { $res['debug']['query'] = $this->db->getLastQuery(); }
         return $this->utils->mysqlJsonResponse($response, $res);
         /*return $response->withJson($this->auth->users());*/
     }
 
+    // TODO users_c1() hardcode some basic security here in case rbac rules fail to exist
+    public function users_c1(Request $request, Response $response, array $args = []): Response
+    {
+        $rp = $request->getQueryParams();
+        // required params
+        foreach (['handle', 'email', 'sub'] as $key) {
+            if (!array_key_exists($key, $rp)) { throw new \Exception($key . ' is required.'); }
+            if ($rp[$key] == '') { throw new \Exception($key . ' must not be empty.'); }
+            if ($key == 'sub') {
+                    $uuid = \Ramsey\Uuid\Uuid::fromString($rp[$key]);
+                    if ($uuid->getVersion() !== \Ramsey\Uuid\Uuid::UUID_TYPE_RANDOM) { throw new \Exception('Only UUIDv4 is supported for `sub`.'); }
+            }
+        }
+        // whitelist
+        foreach (['handle', 'email', 'sub'] as $key) { $payload[$key] = $rp[$key]; }
+        $res = $this->auth->adduser($payload);
+        return $response->withJson($res);
+    }
 
+    // TODO domains_c1() hardcode some basic security here in case rbac rules fail to exist
+    public function domains_c1(Request $request, Response $response, array $args = []): Response
+    {
+        $rp = $request->getQueryParams();
+        // required params
+        foreach (['owner', 'name'] as $key) {
+            if (!array_key_exists($key, $rp)) { throw new \Exception($key . ' is required.'); }
+            if ($rp[$key] == '') { throw new \Exception($key . ' must not be empty.'); }
+        }
+        if (!$this->auth->getuser($rp['owner'])) { throw new \Exception('owner uuid `'.$rp['owner'].'` not found.');}
+        $res = $this->auth->adddomain($rp['name'], $rp['owner']);
+        return $response->withJson($res);
+    }
 
     public function roles_c1(Request $request, Response $response, array $args = []): Response
     {
@@ -363,6 +394,7 @@ class AuthController extends AbstractController
      * TODO provide a "list domain" endpoint meant for regular users
      * TODO join against users table to get username for primary_owner and all owners too.
      * TODO consider duplicating user-domain relation in a specialized table
+     * TODO request https://glued/api/core/auth/domains/v1?owner=01462ec3-6fab-4111-bca5-970fc9029f9de&name=a fails
      * @param  Request  $request
      * @param  Response $response
      * @param  array    $args

@@ -136,6 +136,7 @@ routes:
         service:    core
         methods:
             get:    Glued\Controllers\AuthController:users_r1
+            post:    Glued\Controllers\AuthController:users_c1
     be_core_auth_roles_v1:
         pattern:    ${routes.be_core.path}/auth/roles/v1
         path:       ${routes.be_core.path}/auth/roles/v1
@@ -153,6 +154,7 @@ routes:
         service:    core
         methods:
             get:    Glued\Controllers\AuthController:domains_r1
+            post:   Glued\Controllers\AuthController:domains_c1
     internal_core_auth_enforce_v1:
         pattern:    /internal/auth/v1
         path:       /internal/auth/v1
