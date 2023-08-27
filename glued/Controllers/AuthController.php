@@ -348,6 +348,7 @@ class AuthController extends AbstractController
     {
         $rp = $request->getQueryParams();
         // required params
+
         foreach (['handle', 'email', 'sub'] as $key) {
             if (!array_key_exists($key, $rp)) { throw new \Exception($key . ' is required.'); }
             if ($rp[$key] == '') { throw new \Exception($key . ' must not be empty.'); }
@@ -358,12 +359,7 @@ class AuthController extends AbstractController
         }
         // whitelist
         foreach (['handle', 'email', 'sub'] as $key) { $payload[$key] = $rp[$key]; }
-        try {
-            $res = $this->auth->adduser($payload);
-        } catch (\Exception $e) {
-            echo $this->db->getLastQuery();
-            print_r($e);
-        }
+        $res = $this->auth->adduser($payload);
         return $response->withJson($res);
     }
 
