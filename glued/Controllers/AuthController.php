@@ -358,7 +358,12 @@ class AuthController extends AbstractController
         }
         // whitelist
         foreach (['handle', 'email', 'sub'] as $key) { $payload[$key] = $rp[$key]; }
-        $res = $this->auth->adduser($payload);
+        try {
+            $res = $this->auth->adduser($payload);
+        } catch (\Exception $e) {
+            echo $this->db->getLastQuery();
+            print_r($e);
+        }
         return $response->withJson($res);
     }
 
