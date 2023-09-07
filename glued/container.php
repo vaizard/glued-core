@@ -209,15 +209,12 @@ $container->set('enforcer', function (Container $c) {
     }
 
     $e = new Enforcer($s['casbin']['modelconf'], $adapter);
-
     $e->addNamedMatchingFunc('g', 'keyMatch2', function (string $key1, string $key2) {
         return BuiltinOperations::keyMatch2($key1, $key2);
     });
     $e->addNamedDomainMatchingFunc('g', 'keyMatch2', function (string $key1, string $key2) {
         return BuiltinOperations::keyMatch2($key1, $key2);
     });
-
-
     return $e;
 });
 
