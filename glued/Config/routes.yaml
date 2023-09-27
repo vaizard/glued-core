@@ -137,6 +137,15 @@ routes:
         methods:
             get:    Glued\Controllers\AuthController:users_r1
             post:    Glued\Controllers\AuthController:users_c1
+    be_core_auth_tokens_v1:
+        pattern:    ${routes.be_core.path}/auth/tokens/v1
+        path:       ${routes.be_core.path}/auth/tokens/v1
+        label:      Manage tokens
+        dscr:       Api endpoint for managing tokens.
+        service:    core
+        methods:
+            get:    Glued\Controllers\AuthController:tokens_r1
+            post:    Glued\Controllers\AuthController:tokens_c1
     be_core_auth_roles_v1:
         pattern:    ${routes.be_core.path}/auth/roles/v1
         path:       ${routes.be_core.path}/auth/roles/v1

@@ -97,7 +97,6 @@
     "post-update-cmd": [
       "composer migrate",
       "composer configure || echo \"[FAIL] Failed to configure glued. Please make sure all env variables are set. Rerun composer configure.\"",
-      "patch -s --reject-file=/dev/null -p1 vendor/monolog/monolog/src/Monolog/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch",
       "echo \"Run 'composer nginx' manually to pick restart this microservice\""
     ],
     "backup": [
@@ -115,9 +114,11 @@
       "vendor/vaizard/glued-lib/src/Scripts/migrate.sh"
     ],
     "nginx": [
+      "patch -s --reject-file=/dev/null -p1 vendor/monolog/monolog/src/Monolog/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch",
       "vendor/vaizard/glued-lib/src/Scripts/nginx.sh",
       "Glued\\Lib\\ComposerHooks::generateNginx",
-      "vendor/vaizard/glued-lib/src/Scripts/nginx-reload.sh"
+      "vendor/vaizard/glued-lib/src/Scripts/nginx-reload.sh",
+      "patch -Rs --reject-file=/dev/null -p1 vendor/monolog/monolog/src/Monolog/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch"
     ],
     "react": [
       "glued/Config/React/deploy.sh"

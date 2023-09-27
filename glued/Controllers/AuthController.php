@@ -273,6 +273,50 @@ class AuthController extends AbstractController
     }
 
 
+    public function tokens_c1(Request $request, Response $response, array $args = []): Response
+    {
+        $rp = $request->getQueryParams();
+        $attr = json_decode($rp['attr'] ?? "{}", true);
+        if (!isset($attr['consumer']['type']) || !in_array($attr['consumer']['type'], ['svc', 'app'])) {
+            throw new \Exception("Invalid or missing 'consumer.type' attribute.");
+        }
+        if ($attr['consumer']['type'] === 'svc') {
+            $requiredKeys = ['name', 'host'];
+            foreach ($requiredKeys as $key) {
+                if (!isset($attr['consumer'][$key])) { throw new \Exception("For 'svc' type, 'consumer.$key' must be set."); }
+            }
+        }
+        $owner = $_SERVER['HTTP_X-GLUED-AUTH-UUID'] ?? 'anonymous';
+        if ($owner === 'anonymous') { throw new \Exception("Only authorized users can add tokens.", 403); }
+        $r = $this->auth->generate_api_token($owner, expiry: null, attributes: $attr);
+        return $response->withJson($r);
+    }
+
+
+
+    public function tokens_r1(Request $request, Response $response, array $args = []): Response {
+        $rp = $request->getQueryParams() ?? [];
+        $qs = '
+            SELECT 
+                json_merge(
+                json_object (
+                    "uuid", bin_to_uuid(tok.c_uuid, true),
+                    "exp", c_expired_at,
+                    "owner_handle", u.c_handle,
+                    "owner_uuid", bin_to_uuid(tok.c_inherit, true)
+                ), tok.c_attr) as res_rows
+            FROM t_core_tokens AS tok 
+            LEFT JOIN t_core_users AS u ON tok.c_inherit = u.c_uuid
+        ';
+        $qp = null;
+        $wm = [];
+        $qs = (new \Glued\Lib\QueryBuilder())->select($qs);
+        $this->utils->mysqlJsonQueryFromRequest(reqparams: $rp, qstring: $qs, qparams: $qp, wheremods: $wm, jsonkey: 'tok.c_attr');
+        $res = $this->db->rawQuery($qs, $qp);
+        return $this->utils->mysqlJsonResponse($response, $res);
+    }
+
+
     function mysqlJsonQueryFromRequest(array $reqparams, QuerySelect &$qstring, &$qparams, array $wheremods = []) {
 
         // define fallback where modifier for the 'uuid' reqparam.

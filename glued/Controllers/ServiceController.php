@@ -50,7 +50,8 @@ class ServiceController extends AbstractController
                 'service' => basename(__ROOT__),
                 'provided-for' => $_SERVER['HTTP_X-GLUED-AUTH-UUID'] ?? 'anonymous'
             ];
-        //if ($data['provided-for'] !== 'anonymous') { $this->generateApiKey($_SERVER['HTTP_X-GLUED-AUTH-UUID']); }
+        //$data['x'] = $this->auth->verify_token()
+        if ($data['provided-for'] !== 'anonymous') { $this->auth->generate_api_token($_SERVER['HTTP_X-GLUED-AUTH-UUID']); }
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
