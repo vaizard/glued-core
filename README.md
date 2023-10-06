@@ -29,7 +29,8 @@ echo "extension=sqlsrv.so" > /etc/php/$(php --ini | grep Loaded | cut -d'/' -f4)
 phpenmod pdo_sqlsrv
 phpenmod sqlsrv
 # tools
-apt install -y  jq mc
+apt install -y jq mc
+snap install httpie
 # node
 
 apt install -y nodejs
