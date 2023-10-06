@@ -2,14 +2,18 @@
 Core microservice for Glued
 
 ```
-# Ubuntu is really slow on backporting fixes. We use sury
+# Prereqs
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+sudo mkdir -p /etc/apt/keyrings
+
+# Ubuntu is really slow on some packages. We add ppas
 LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y
 LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/nginx-mainline -y
-apt update
-
-curl -fsSL https://deb.nodesource.com/setup_16.x | sudo bash -
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
 curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 
 # base
 apt install -y nginx libnginx-mod-http-headers-more-filter php php-fpm php-apcu php-bcmath php-curl php-dev php-gd php-gmp php-imap php-json php-mbstring php-mysql php-pear php-readline php-soap php-xml php-zip apache2-utils git mysql-server
@@ -27,6 +31,7 @@ phpenmod sqlsrv
 # tools
 apt install -y  jq mc
 # node
+
 apt install -y nodejs
 # dbmate
 sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
