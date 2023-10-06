@@ -11,8 +11,8 @@ sudo mkdir -p /etc/apt/keyrings
 LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y
 LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/nginx-mainline -y
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
-curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 
 # base
@@ -21,13 +21,15 @@ apt install -y nginx libnginx-mod-http-headers-more-filter php php-fpm php-apcu 
 sudo curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
 sudo php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
 # mssql
-apt install -y mssql-tools unixodbc-dev php-pear php-dev
+apt install -y msodbcsql18 mssql-tools18 unixodbc-dev php-pear php-dev
 pecl update-channels
 pecl upgrade sqlsrv pdo_sqlsrv
 echo "extension=pdo_sqlsrv.so" > /etc/php/$(php --ini | grep Loaded | cut -d'/' -f4)/mods-available/pdo_sqlsrv.ini
 echo "extension=sqlsrv.so" > /etc/php/$(php --ini | grep Loaded | cut -d'/' -f4)/mods-available/sqlsrv.ini
 phpenmod pdo_sqlsrv
 phpenmod sqlsrv
+echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
+
 # tools
 apt install -y jq mc
 snap install httpie
