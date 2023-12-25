@@ -15,8 +15,9 @@ server {
 
         more_set_headers 'Access-Control-Allow-Origin: *';
         root /var/www/html/glued-core/public;
-        listen 443 ssl http2 default_server;
-        listen [::]:443 ssl http2 default_server;
+        listen 443 ssl default_server;
+        listen [::]:443 ssl default_server;
+        http2 on;
         include snippets/server/common.conf;
 
         ##########################
