@@ -60,7 +60,6 @@
     "voku/anti-xss": "^4",
     "web-token/jwt-framework": "^3",
     "zeuxisoo/slim-whoops": "^0.7",
-    "psr/log": "^3",
     "symfony/monolog-bundle": "^3.8",
     "symfony/console": "^6.3.0-BETA2"
   },
@@ -118,6 +117,9 @@
       "vendor/vaizard/glued-lib/src/Scripts/nginx.sh",
       "Glued\\Lib\\ComposerHooks::generateNginx",
       "vendor/vaizard/glued-lib/src/Scripts/nginx-reload.sh",
+      "vendor/vaizard/glued-lib/src/Scripts/php-fpm.sh",
+      "Glued\\Lib\\ComposerHooks::generatePHPFPM",
+      "vendor/vaizard/glued-lib/src/Scripts/php-fpm-reload.sh",
       "patch -Rs --reject-file=/dev/null -p1 vendor/monolog/monolog/src/Monolog/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch"
     ],
     "react": [
