@@ -200,3 +200,12 @@ routes:
         provides:   routes_list
         methods:
             get:    Glued\Controllers\ServiceController:routes_list
+
+    be_core_apidocs_v1:
+        pattern:    ${routes.be_core.path}/v1/apidocs
+        path:       ${routes.be_core.path}/v1/apidocs
+        label:      Openapi yamls/jsons
+        dscr:       List URIs with Openapi source files
+        service:    core
+        methods:
+            get:    Glued\Controllers\ServiceController:apidocs

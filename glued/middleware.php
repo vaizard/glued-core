@@ -1,16 +1,8 @@
 <?php
 /** @noinspection PhpUndefinedVariableInspection */
 declare(strict_types=1);
-use DI\Container;
-use Glued\Lib\Middleware\AntiXSSMiddleware;
 use Glued\Lib\Middleware\TimerMiddleware;
-use Middlewares\Csp;
 use Middlewares\TrailingSlash;
-use Nyholm\Psr7\Response as Psr7Response;
-use ParagonIE\CSPBuilder\CSPBuilder;
-use Slim\App;
-use Slim\Exception\HttpNotFoundException;
-use Slim\Middleware\ErrorMiddleware;
 use Slim\Middleware\MethodOverrideMiddleware;
 use Tuupola\Middleware\CorsMiddleware;
 use Zeuxisoo\Whoops\Slim\WhoopsMiddleware;

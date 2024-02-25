@@ -25,9 +25,9 @@ class ServiceController extends AbstractController
 
     /**
      * Returns an exception.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
+     * @param  Request  $request
+     * @param  Response $response
+     * @param  array    $args
      * @return Response Json result set.
      */
     public function stub(Request $request, Response $response, array $args = []): Response {
@@ -36,20 +36,20 @@ class ServiceController extends AbstractController
 
     /**
      * Returns a health status response.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
+     * @param  Request  $request
+     * @param  Response $response
+     * @param  array    $args
      * @return Response Json result set.
      */
     public function health(Request $request, Response $response, array $args = []): Response {
         $params = $request->getQueryParams();
         $data = [
-                'timestamp' => microtime(),
-                'status' => 'OK',
-                'params' => $params,
-                'service' => basename(__ROOT__),
-                'provided-for' => $_SERVER['HTTP_X-GLUED-AUTH-UUID'] ?? 'anonymous'
-            ];
+            'timestamp' => microtime(),
+            'status' => 'OK',
+            'params' => $params,
+            'service' => basename(__ROOT__),
+            'provided-for' => $_SERVER['HTTP_X-GLUED-AUTH-UUID'] ?? 'anonymous'
+        ];
         //$data['x'] = $this->auth->verify_token()
         if ($data['provided-for'] !== 'anonymous') { $this->auth->generate_api_token($_SERVER['HTTP_X-GLUED-AUTH-UUID']); }
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
@@ -70,5 +70,21 @@ class ServiceController extends AbstractController
         ];
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
+
+    public function apidocs(Request $request, Response $response, array $args = []): Response {
+        $data = [];
+        $openapis = array_filter($this->settings['routes'], function ($route) {
+            return isset($route['provides']) && $route['provides'] === 'openapi';
+        });
+        foreach ($openapis as $route) {
+            $data[] = [
+                'url' => "{$this->settings['glued']['protocol']}{$this->settings['glued']['hostname']}{$route['path']}",
+                'name' => $route['label']
+                ];
+        }
+        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
+    }
+
+
 
 }
