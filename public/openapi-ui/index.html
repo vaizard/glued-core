@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swagger UI</title>
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.7/swagger-ui.css">
+    <link rel="stylesheet" type="text/css" href="./swagger-ui.css">
     <style>
         .swagger-input-wrapper {
             display: flex;
@@ -49,12 +49,16 @@
     <button onclick="loadSwaggerUI()">Load API</button>
 </div>
 <div id="swagger-ui"></div>
-<script src="https://unpkg.com/swagger-ui-dist@5.11.7/swagger-ui-bundle.js"></script>
-<script src="https://unpkg.com/swagger-ui-dist@5.11.7/swagger-ui-standalone-preset.js"></script>
+<script src="./swagger-ui-bundle.js"></script>
+<script src="./swagger-ui-standalone-preset.js"></script>
 <script>
     async function fetchApiDocs() {
         try {
-            const response = await fetch('https://glued/api/core/v1/apidocs');
+            let baseUrl = window.location.origin;       // 'https://openapi.glued'
+            baseUrl = baseUrl.replace('openapi.', '');  // 'https://glued'
+            const apiPath = '/api/core/v1/apidocs';
+            const fullUrl = `${baseUrl}${apiPath}`;
+            const response = await fetch(fullUrl);
             const data = await response.json();
             const select = document.getElementById('apiUrlDropdown');
             data.forEach(apiDoc => {
