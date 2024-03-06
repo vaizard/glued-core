@@ -109,6 +109,11 @@
     "genkey": [
       "Glued\\Lib\\ComposerHooks::genKey"
     ],
+    "swagger-update": [
+      "wget https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css -O public/openapi-ui/swagger-ui.css",
+      "wget https://unpkg.com/swagger-ui-dist@latest/swagger-ui-bundle.js -O public/openapi-ui/swagger-ui-bundle.js",
+      "wget https://unpkg.com/swagger-ui-dist@latest/swagger-ui-standalone-preset.js -O public/openapi-ui/swagger-ui-standalone-preset.js"
+    ],
     "migrate": [
       "vendor/vaizard/glued-lib/src/Scripts/migrate.sh"
     ],

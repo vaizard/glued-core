@@ -81,7 +81,7 @@ $container->set('settings', function () {
     // TODO replicate foreach below to other microservices.
     // TODO document in readme that no recursive array_merge is done and that you intentionally have to repeat defaults or alternatively use extensions such as 'overwrite' and 'append' to differentate and merge arrays recursively (or not) accordingly
     $files[] = __ROOT__ . '/vendor/vaizard/glued-lib/src/defaults.yaml';
-    $files = array_merge($files, glob($refs['env']['DATAPATH'] . '/glued-stor/config/*.y*ml'));
+    $files = array_merge($files, glob($refs['env']['DATAPATH'] . '/*/config/*.y*ml'));
     foreach ($files as $file) {
         $yaml = file_get_contents($file);
         $array = $class_sy->parse($yaml, $class_sy::PARSE_CONSTANT);
@@ -89,7 +89,7 @@ $container->set('settings', function () {
     }
 
     // Read the routes
-    $files = glob($ret['glued']['datapath'] . '/*/cache/routes.yaml');
+    $files = glob($ret['glued']['datapath'] . '/*/cache/routes.y*ml');
     foreach ($files as $file) {
         $yaml = file_get_contents($file);
         $array = $class_sy->parse($yaml);
