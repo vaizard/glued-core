@@ -4,7 +4,7 @@ Core microservice for Glued
 ```
 # Prereqs
 sudo apt update
-sudo apt install -y ca-certificates curl gnupg
+sudo apt install -y ca-certificates curl gnupg software-properties-common
 sudo mkdir -p /etc/apt/keyrings
 
 # Ubuntu is really slow on some packages. We add ppas
