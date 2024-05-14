@@ -78,7 +78,7 @@ class ServiceController extends AbstractController
         });
         foreach ($openapis as $route) {
             $data[] = [
-                'url' => "{$this->settings['glued']['protocol']}{$this->settings['glued']['hostname']}{$route['path']}",
+                'url' => "{$this->settings['glued']['protocol']}{$this->settings['glued']['hostname']}{$route['pattern']}",
                 'name' => $route['label']
                 ];
         }
