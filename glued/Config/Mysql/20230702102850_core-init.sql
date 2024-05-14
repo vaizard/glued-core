@@ -1,6 +1,6 @@
 -- migrate:up
 
-CREATE TABLE `casbin_rule` (
+CREATE TABLE IF NOT EXISTS `casbin_rule`  (
   `id` binary(16) NOT NULL DEFAULT (uuid_to_bin(uuid(),true)),
   `ptype` varchar(255) NOT NULL,
   `v0` varchar(255) DEFAULT NULL,
