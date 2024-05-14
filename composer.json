@@ -9,7 +9,7 @@
     }
   ],
   "require": {
-    "php": "^8.2",
+    "php": "^8.3",
     "ext-apcu": "*",
     "ext-bcmath": "*",
     "ext-curl": "*",
@@ -31,15 +31,13 @@
     "http-interop/http-factory-guzzle": "^1",
     "league/flysystem": "^3",
     "linfo/linfo": "^4",
-    "middlewares/csp": "^3",
     "middlewares/trailing-slash": "^2",
     "mohammad-waleed/keycloak-admin-client": "^0",
     "monolog/monolog": "^3",
     "nesbot/carbon": "^2",
     "nyholm/psr7": "^1",
     "nyholm/psr7-server": "*",
-    "opis/json-schema": "^2",
-    "paragonie/csp-builder": "^2.8",
+    "paragonie/csp-builder": "^3",
     "php-di/php-di": "^7",
     "php-http/guzzle7-adapter": "^1",
     "psr/http-message": "^1",
@@ -61,7 +59,7 @@
     "web-token/jwt-framework": "^3",
     "zeuxisoo/slim-whoops": "^0.7",
     "symfony/monolog-bundle": "^3.8",
-    "symfony/console": "^6.3.0-BETA2"
+    "symfony/console": "^6.4"
   },
   "require-dev": {
     "ergebnis/composer-normalize": "^2"

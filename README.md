@@ -17,6 +17,10 @@ curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg 
 curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
 curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
 
+# ms cuntiness workaround (required packages not for ubuntu younger than 22.04)
+curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
+
 sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql-archive-keyring.gpg
 
@@ -24,12 +28,12 @@ curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearm
 
 # base
 sudo apt-get update
-apt install -y nginx libnginx-mod-http-headers-more-filter php php-fpm php-apcu php-bcmath php-curl php-dev php-gd php-gmp php-imap php-json php-pgsql php-mbstring php-mysql php-pear php-readline php-soap php-xml php-zip apache2-utils git mysql-server postgresql
+apt install -y nginx libnginx-mod-http-headers-more-filter php php-fpm php-apcu php-bcmath php-curl php-dev php-gd php-gmp php-imap php-json php-pgsql php-mbstring php-mysql php-pear php-readline php-soap php-xml php-yaml php-zip apache2-utils git mysql-server postgresql sshpass
 # composer
 sudo curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
 sudo php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
 # mssql
-apt install -y msodbcsql18 mssql-tools18 unixodbc-dev php-pear php-dev
+ACCEPT_EULA=Y apt install -y msodbcsql18 mssql-tools18 unixodbc-dev php-pear php-dev
 pecl update-channels
 pecl upgrade sqlsrv pdo_sqlsrv
 echo "extension=pdo_sqlsrv.so" > /etc/php/$(php --ini | grep Loaded | cut -d'/' -f4)/mods-available/pdo_sqlsrv.ini
@@ -39,6 +43,8 @@ phpenmod sqlsrv
 echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
 sudo sed -i '/^#.*local\s*all\s*all\s*peer/b; /local\s*all\s*all\s*peer/s/^/#/' /etc/postgresql/16/main/pg_hba.conf
 grep -q "local\s*all\s*all\s*scram-sha-256" /etc/postgresql/16/main/pg_hba.conf || echo "local   all   all   scram-sha-256" | sudo tee -a /etc/postgresql/16/main/pg_hba.conf
+grep -q "host\s*all\s*all\s*all\s*scram-sha-256" /etc/postgresql/16/main/pg_hba.conf || echo "host    all   all   all   scram-sha-256" | sudo tee -a /etc/postgresql/16/main/pg_hba.conf
+
 
 # tools
 apt install -y jq mc
@@ -50,9 +56,9 @@ apt install -y nodejs
 sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
 sudo chmod +x /usr/local/bin/dbmate
 
-systemctl start php8.2-fpm
+systemctl start php8.3-fpm
 systemctl start nginx
-systemctl enable php8.2-fpm
+systemctl enable php8.3-fpm
 systemctl enable nginx
 systemctl start postgresql
 systemctl enable postgresql
