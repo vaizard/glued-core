@@ -36,7 +36,8 @@ require_once (__ROOT__ . '/glued/container.php');
 require_once (__ROOT__ . '/glued/environment.php');
 require_once (__ROOT__ . '/glued/events.php');
 require_once (__ROOT__ . '/glued/middleware.php');
-require_once (__ROOT__ . '/glued/routes.php');
+require_once (__ROOT__ . '/vendor/vaizard/glued-lib/src/Includes/routes.php');
+
 
 $app->run();
 
