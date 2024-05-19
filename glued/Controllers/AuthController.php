@@ -22,9 +22,6 @@ class AuthController extends AbstractController
 
 
 
-
-
-
     public function enforce(Request $request, Response $response, array $args = []): Response
     {
 
@@ -99,11 +96,11 @@ class AuthController extends AbstractController
 
 
         // Authorization: provide hardcoded responses for test routes
-        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_pass_v1']['path']) {
+        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_pass']['pattern']) {
             $this->logger->debug("auth.enforce hardcoded pass", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
             //return $response->withStatus(200)->withHeader('Content-Length', 0)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? 'anonymous');
         }
-        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail_v1']['path']) {
+        if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail']['pattern']) {
             $this->logger->debug("auth.enforce hardcoded fail", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
             return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? 'anonymous');
         }
@@ -129,19 +126,8 @@ class AuthController extends AbstractController
      */
     public function say_status(Request $request, Response $response, array $args = []): Response
     {
-    }
-
-
-   /**
-     * Always returns 'pass'. The AuthController::enforce() has a hardcoded 
-     * positive (200) response for the route with AuthController::say_pass() method.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
-     * @return Response Json result set.
-     */
-    public function say_pass(Request $request, Response $response, array $args = []): Response {
-        $route = $request->getQueryParams()['route'] ?? '';
+        $route = $request->getQueryParams()['route'] ?? false;
+        if (!$route) { throw new \Exception('Query parameter route mandatory. Try `?route=/`'); }
         $who = null;
         $bearer = null;
         $user = null;
@@ -179,11 +165,13 @@ class AuthController extends AbstractController
 
         $routeName = '';
         $routeParsed = parse_url($route);
-        $routeNormalized = rtrim($routeParsed['path'],'/');
+        $routeNormalized = $routeParsed['path'] !== '/' ? rtrim($routeParsed['path'], '/') : $routeParsed['path'];
+
+
         parse_str(isset($routeParsed['query']) ? $routeParsed['query'] : '', $routeParams);
 
         foreach ($this->settings['routes'] as $n=>$r) {
-            if ($r['path'] === $routeNormalized) {
+            if ($r['pattern'] === $routeNormalized) {
                 $routeName = $n;
             }
         }
@@ -214,10 +202,26 @@ class AuthController extends AbstractController
             'route-match' => $routeName,
             'user' => $user
         ]);
-
-
     }
 
+
+
+
+   /**
+     * Always returns 'pass'. The AuthController::enforce() has a hardcoded 
+     * positive (200) response for the route with AuthController::say_pass() method.
+     * @param  Request  $request  
+     * @param  Response $response 
+     * @param  array    $args     
+     * @return Response Json result set.
+     */
+    public function say_pass(Request $request, Response $response, array $args = []): Response
+    {
+        return $response->withJson([
+            'message' => 'pass',
+            'request' => $request->getMethod()
+        ]);
+    }
    /**
      * Always returns 'fail'. The AuthController::enforce() has a hardcoded 
      * negative (403) response for the route with AuthController::say_fail() method.

@@ -79,9 +79,9 @@ server {
         # Exact locations        #
         ##########################
 
-        location = /backend/auth {
+        location = /internal/auth {
             #internal;
-            proxy_pass                 https://127.0.0.1/internal/auth/v1;
+            proxy_pass                 https://127.0.0.1/internal/auth/challenge;
             proxy_set_header Host      $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_pass_request_body    off;

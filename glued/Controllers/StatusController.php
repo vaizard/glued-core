@@ -38,16 +38,6 @@ class StatusController extends AbstractController
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
-    /**
-     * Return complete glued configuration. NOTE that this method must me behind auth.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
-     * @return Response Json result set.
-     */
-    public function config(Request $request, Response $response, array $args = []): Response {
-        return $response->withJson($this->settings, options: JSON_UNESCAPED_SLASHES);
-    }  
 
     /**
      * Returns PHP's get_defined_constants(true). NOTE that this method must me behind auth.
@@ -60,39 +50,6 @@ class StatusController extends AbstractController
         $arr = get_defined_constants(true);
         $response->getBody()->write(json_encode($arr, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-type', 'application/json');
-    }
-
-    /**
-     * Get user's jwt token.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
-     * @return Response Json result set.
-     */
-    public function token_fetch(Request $request, Response $response, array $args = []): Response {
-        try {
-            $data = $this->auth->fetch_token($request);
-        }  catch (AuthJwtException | AuthTokenException $e) {
-            $data['error'] = $e->getMessage();
-            $data['message'] = "Login at ".$this->settings['oidc']['uri']['login'];
-        }
-        return $response->withJson($data);
-    }
-
-    /**
-     * Decodes user's jwt token.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
-     * @return Response Json result set.
-     */
-    public function token_decode(Request $request, Response $response, array $args = []): Response {
-        // Get oidc config, jwk signing keys and the access token
-        $oidc = $this->settings['oidc'];
-        $certs = $this->auth->get_jwks($oidc);
-        $accesstoken = $this->auth->fetch_token($request);
-        $arr = $this->auth->validate_jwt_token($accesstoken, $certs); // TODO optimize in glued-lib by rewriting with JWSLoaderFactory()
-        return $response->withJson($arr, options: JSON_UNESCAPED_SLASHES);
     }
 
     /**

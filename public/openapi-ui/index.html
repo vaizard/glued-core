@@ -56,7 +56,7 @@
         try {
             let baseUrl = window.location.origin;       // 'https://openapi.glued'
             baseUrl = baseUrl.replace('openapi.', '');  // 'https://glued'
-            const apiPath = '/api/core/v1/apidocs';
+            const apiPath = '/api/core/v1/openapis';
             const fullUrl = `${baseUrl}${apiPath}`;
             const response = await fetch(fullUrl);
             const data = await response.json();

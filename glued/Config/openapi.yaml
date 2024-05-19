@@ -1,0 +1,299 @@
+openapi: 3.1.0
+info:
+  title: Glued Core Api
+  description: Core is a authorizing proxy providing ingress to all other Glued services.
+  version: 1.0.0
+  x-glued-service: core
+servers:
+  - url: ""
+paths:
+  /:
+    x-glued-pathname: fe
+    x-glued-provides: frontend
+    get:
+      x-glued-method: Glued\Controllers\FeController:render_ui
+      summary: Glued
+      description: A react
+      operationId: GluedFe
+      responses:
+        '200':
+          description: Ok
+  /internal/auth:
+    x-glued-pathname: internal_auth
+    x-glued-provides: internal
+    get:
+      x-glued-method: false
+      summary: Auth subrequest
+      description: Internal auth subrequest proxy to the InternalAuthChallenge operation.
+      operationId: InternalAuth
+      responses:
+        '200':
+          description: Ok
+        '403':
+          description: Forbidden
+  /internal/auth/challenge:
+    x-glued-pathname: internal_auth_challenge
+    x-glued-provides: internal
+    get:
+      x-glued-method: Glued\Controllers\AuthController:enforce
+      summary: Authorization enforcer
+      description: Authorizes user for the action (crud) on a resource (uri). Returns 200 or 403 as expected by the nginx auth_request_module.
+      operationId: InternalAuthChallenge
+      responses:
+        '200':
+          description: Authorized
+        '403':
+          description: Forbidden
+  /api:
+    x-glued-pathname: be
+    x-glued-provides: backend
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:home
+      summary: API Home
+      description: API Home route
+      operationId: GluedBe
+      responses:
+        '200':
+          description: Ok
+  /api/core:
+    x-glued-pathname: be_core
+    x-glued-provides: openapi
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getOpenapi
+      summary: Core OpenApi specs / Ingress
+      description: Core Ingress point. Returns the OpenAPI YAML specification for the Core API.
+      operationId: CoreIngress
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/yaml:
+              schema:
+                type: string
+  /api/core/v1/health:
+    x-glued-pathname: be_core_health
+    x-glued-provides: health
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:health
+      summary: Healthcheck
+      description: A healthcheck endpoint.
+      operationId: CoreHealth
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/health/os:
+    x-glued-pathname: be_core_health_os
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:sysinfo
+      summary: OS state
+      description: Returns /proc information from the host.
+      operationId: CoreHealthOs
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/routes:
+    x-glued-pathname: be_core_routes
+    x-glued-provides: routes
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:routes_list
+      summary: Routes
+      description: A route list endpoint for the microservice.
+      operationId: CoreRoutes
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/openapis:
+    x-glued-pathname: be_core_openapis
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:apidocs
+      summary: Openapi yamls/jsons
+      description: List URIs with Openapi source files
+      operationId: CoreOpenAPIs
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/config/glued:
+    x-glued-pathname: be_core_config_glued
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\ConfigController:config
+      summary: Glued configuration
+      description: Returns Glued configuration.
+      operationId: CoreConfigGlued
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/config/php:
+    x-glued-pathname: be_core_config_php
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\ConfigController:phpinfo
+      summary: PHP configuration
+      description: Returns link to phpinfo() output.
+      operationId: CoreConfigPhp
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/env/php:
+    x-glued-pathname: be_core_env_php
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:phpconst
+      summary: PHP env
+      description: Returns phpconst().
+      operationId: CoreEnvPhp
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/env/http:
+    x-glued-pathname: be_core_env_http
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:server
+      summary: Http server env
+      description: Returns server environment.
+      operationId: CoreEnvHttp
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/env/auth:
+    x-glued-pathname: be_core_env_auth
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:auth
+      summary: Authentication status
+      description: Returns the encoded and decoded JWT token along with profile data.
+      operationId: CoreEnvAuth
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/env/request:
+    x-glued-pathname: be_core_env_request
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:reflect_request
+      summary: Show request headers
+      description: Returns the client's request headers.
+      operationId: CoreEnvRequest
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/auth/test/challenge:
+    x-glued-pathname: be_core_auth_test_challenge
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:say_status
+      summary: Auth test challenge
+      description: Evaluate a route/method/subject combination against the authorization backend.
+      operationId: CoreAuthTestChallenge
+      parameters:
+        - name: route
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The route parameter, which should be a string.
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/auth/test/pass:
+    x-glued-pathname: be_core_auth_test_pass
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:say_pass
+      summary: Auth test / PASS
+      description: Always returns a 200 response code. Intended for testing the nginx auth_request_module.
+      operationId: CoreAuthTestPass
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/auth/test/fail:
+    x-glued-pathname: be_core_auth_test_fail
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:say_fail
+      summary: Auth test / FAIL
+      description: Always returns a 403 response code. Intended for testing the nginx auth_request_module.
+      operationId: CoreAuthTestFail
+      responses:
+        '403':
+          description: Forbidden
+  /api/core/v1/auth/users:
+    x-glued-pathname: be_core_auth_users
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:users_r1
+      summary: Manage users
+      description: Api endpoint for managing users.
+      operationId: CoreAuthUsersGet
+      responses:
+        '200':
+          description: Ok
+    post:
+      x-glued-method: Glued\Controllers\AuthController:users_c1
+      summary: Manage users
+      description: Api endpoint for managing users.
+      operationId: CoreAuthUsersPost
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/auth/tokens:
+    x-glued-pathname: be_core_auth_tokens
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:tokens_r1
+      summary: Manage tokens
+      description: Api endpoint for managing tokens.
+      operationId: CoreAuthTokensGet
+      responses:
+        '200':
+          description: Ok
+    post:
+      x-glued-method: Glued\Controllers\AuthController:tokens_c1
+      summary: Manage tokens
+      description: Api endpoint for managing tokens.
+      operationId: CoreAuthTokensPost
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/auth/roles:
+    x-glued-pathname: be_core_auth_roles
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:roles_r1
+      summary: Manage roles
+      description: Api endpoint for managing roles.
+      operationId: CoreAuthRolesGet
+      responses:
+        '200':
+          description: Ok
+    post:
+      x-glued-method: Glued\Controllers\AuthController:roles_c1
+      summary: Manage roles
+      description: Api endpoint for managing roles.
+      operationId: CoreAuthRolesPost
+      responses:
+        '200':
+          description: Ok
+  /api/core/v1/auth/domains:
+    x-glued-pathname: be_core_auth_domains
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:domains_r1
+      summary: Manage domains
+      description: Api endpoint for managing domains.
+      operationId: CoreAuthDomainsGet
+      responses:
+        '200':
+          description: Ok
+    post:
+      x-glued-method: Glued\Controllers\AuthController:domains_c1
+      summary: Manage domains
+      description: Api endpoint for managing domains.
+      operationId: CoreAuthDomainsPost
+      responses:
+        '200':
+          description: Ok
+
