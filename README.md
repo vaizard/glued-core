@@ -47,11 +47,12 @@ grep -q "host\s*all\s*all\s*all\s*scram-sha-256" /etc/postgresql/16/main/pg_hba.
 
 
 # tools
-apt install -y jq mc
-snap install httpie
+sudo apt install -y jq mc
+sudo snap install httpie
 # node
 
-apt install -y nodejs
+sudo apt install -y nodejs
+sudo corepack enable
 # dbmate
 sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
 sudo chmod +x /usr/local/bin/dbmate
