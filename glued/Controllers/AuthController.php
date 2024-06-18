@@ -3,11 +3,11 @@ declare(strict_types=1);
 namespace Glued\Controllers;
 
 use Glued\Lib\QuerySelect;
-use mysql_xdevapi\Exception;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Glued\Lib\Controllers\AbstractBlank;
 
-class AuthController extends AbstractController
+class AuthController extends AbstractBlank
 {
 
     /**

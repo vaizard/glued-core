@@ -62,6 +62,7 @@ systemctl enable php8.3-fpm
 systemctl enable nginx
 systemctl start postgresql
 systemctl enable postgresql
+systemctl restart postgresql
 systemctl start mysql
 systemctl enable mysql
 ```

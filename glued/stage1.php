@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpUndefinedVariableInspection */
 declare(strict_types=1);
 
 use Casbin\Enforcer;
@@ -15,12 +16,15 @@ use GuzzleHttp\Client as Guzzle;
 use Keycloak\Admin\KeycloakClient;
 use Sabre\Event\Emitter;
 
-require_once(__ROOT__ . '/vendor/vaizard/glued-lib/src/Includes/container.php');
+/**
+ * STAGE1
+ * used extend / modify the default container dependencies
+ */
+
 
 $container->set('events', function () {
     return new Emitter();
 });
-
 
 $container->set('db', function (Container $c) {
     $mysqli = $c->get('my');
@@ -125,12 +129,6 @@ $container->set('auth', function (Container $c) {
 $container->set('utils', function (Container $c) {
     return new Utils($c->get('settings'), $c->get('routecollector'));
 });
-
-/*
-$container->set('stor', function (Container $c) {
-    return new Stor($c->get('db'));
-});
-*/
 
 
 $container->set('guzzle', function () {

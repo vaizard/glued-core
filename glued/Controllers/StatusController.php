@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace Glued\Controllers;
 
+use Glued\Lib\Controllers\AbstractBlank;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Glued\Classes\Auth;
-use Glued\Lib\Exceptions\DefaultException;
-use Glued\Lib\Exceptions\AuthTokenException;
-use Glued\Lib\Exceptions\AuthJwtException;
-use Glued\Lib\Exceptions\AuthOidcException;
-use Glued\Lib\Exceptions\DbException;
 use Glued\Lib\Exceptions\TransformException;
 use Linfo\Linfo;
 
 
-class StatusController extends AbstractController
+class StatusController extends AbstractBlank
 {
 
     /**
