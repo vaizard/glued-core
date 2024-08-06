@@ -92,27 +92,27 @@ class AuthController extends AbstractBlank
             //return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_MESSAGE', $e->getMessage());
         }
 
-        $this->logger->error( 'auth.enforce authenticated as', [ "X-GLUED-AUTH-UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
+        $this->logger->error( 'auth.enforce authenticated as', [ "X-GLUED-AUTH-UUID" => $token['claims']['sub'] ?? '00000000-0000-0000-0000-000000000000' ]);
 
 
         // Authorization: provide hardcoded responses for test routes
         if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_pass']['pattern']) {
-            $this->logger->debug("auth.enforce hardcoded pass", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
-            //return $response->withStatus(200)->withHeader('Content-Length', 0)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? 'anonymous');
+            $this->logger->debug("auth.enforce hardcoded pass", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? '00000000-0000-0000-0000-000000000000' ]);
+            //return $response->withStatus(200)->withHeader('Content-Length', 0)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? '00000000-0000-0000-0000-000000000000');
         }
         if ($_SERVER['HTTP_X_ORIGINAL_URI'] == $this->settings['routes']['be_core_auth_test_fail']['pattern']) {
-            $this->logger->debug("auth.enforce hardcoded fail", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? 'anonymous' ]);
-            return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? 'anonymous');
+            $this->logger->debug("auth.enforce hardcoded fail", [ "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'], "X_GLUED_AUTH_UUID" => $token['claims']['sub'] ?? '00000000-0000-0000-0000-000000000000' ]);
+            return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? '00000000-0000-0000-0000-000000000000');
         }
 
         // Authorization
         // TODO add CASBIN authorization code here
         // For now allow all.
         // TODO delete allow all when authorization code in place
-        return $response->withStatus(200)->withHeader('Content-Length', 0)->withHeader('X_GLUED_AUTH_UUID', $token['claims']['sub'] ?? 'anonymous')->withHeader('X_GLUED_AUTH_MSG', 'DEV CODE. DO NOT USE IN PRODUCTION.');
+        return $response->withStatus(200)->withHeader('Content-Length', 0)->withHeader('X_GLUED_AUTH_UUID', $token['claims']['sub'] ?? '00000000-0000-0000-0000-000000000000')->withHeader('X_GLUED_AUTH_MSG', 'DEV CODE. DO NOT USE IN PRODUCTION.');
 
         // Fallback authorization response: DENY
-        return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_AUTH_UUID', $token['claims']['sub'] ?? 'anonymous');
+        return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_AUTH_UUID', $token['claims']['sub'] ?? '00000000-0000-0000-0000-000000000000');
     }
 
 
@@ -290,8 +290,8 @@ class AuthController extends AbstractBlank
                 if (!isset($attr['consumer'][$key])) { throw new \Exception("For 'svc' type, 'consumer.$key' must be set."); }
             }
         }
-        $owner = $_SERVER['HTTP_X-GLUED-AUTH-UUID'] ?? 'anonymous';
-        if ($owner === 'anonymous') { throw new \Exception("Only authorized users can add tokens.", 403); }
+        $owner = $_SERVER['HTTP_X-GLUED-AUTH-UUID'] ?? '00000000-0000-0000-0000-000000000000';
+        if ($owner === '00000000-0000-0000-0000-000000000000') { throw new \Exception("Only authorized users can add tokens.", 403); }
         $r = $this->auth->generate_api_token($owner, expiry: null, attributes: $attr);
         return $response->withJson($r);
     }
