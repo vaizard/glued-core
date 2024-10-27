@@ -31,7 +31,6 @@
     "http-interop/http-factory-guzzle": "^1",
     "league/flysystem": "^3",
     "linfo/linfo": "^4",
-    "middlewares/trailing-slash": "^2",
     "mohammad-waleed/keycloak-admin-client": "^0",
     "monolog/monolog": "^3",
     "nesbot/carbon": "^2",
@@ -106,6 +105,9 @@
     ],
     "genkey": [
       "Glued\\Lib\\ComposerHooks::genKey"
+    ],
+    "getenv": [
+      "Glued\\Lib\\ComposerHooks::getEnv"
     ],
     "swagger-update": [
       "wget https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css -O public/openapi-ui/swagger-ui.css",

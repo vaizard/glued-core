@@ -80,7 +80,8 @@ server {
         ##########################
 
         location = /internal/auth {
-            #internal;
+            internal;
+            # proxy_intercept_errors     on;
             proxy_pass                 https://127.0.0.1/internal/auth/challenge;
             proxy_set_header Host      $host;
             proxy_set_header X-Real-IP $remote_addr;
@@ -89,6 +90,11 @@ server {
             proxy_set_header           X-Original-URI $request_uri;
             proxy_set_header           X-Original-Method $request_method;
             proxy_ssl_protocols        TLSv1.3;
+        }
+
+        location @auth_error {
+           default_type application/json;
+           return 502 '{"status": "502 Bad gateway.", "message": "Authentication backend failed."}';
         }
 
         include snippets/location/*;

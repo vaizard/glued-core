@@ -7,7 +7,6 @@ namespace Glued\Controllers;
 use Glued\Lib\Controllers\AbstractService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Glued\Lib\Exceptions\TransformException;
 
 class ServiceController extends AbstractService
 {
@@ -24,16 +23,6 @@ class ServiceController extends AbstractService
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
-    /**
-     * Returns an exception.
-     * @param  Request  $request
-     * @param  Response $response
-     * @param  array    $args
-     * @return Response Json result set.
-     */
-    public function stub(Request $request, Response $response, array $args = []): Response {
-        throw new \Exception('Stub method served where it shouldn\'t. Proxy misconfigured?');
-    }
 
     /**
      * Returns a health status response.
@@ -42,7 +31,9 @@ class ServiceController extends AbstractService
      * @param  array    $args
      * @return Response Json result set.
      */
+    /*
     public function health(Request $request, Response $response, array $args = []): Response {
+
         $params = $request->getQueryParams();
         $data = [
             'timestamp' => microtime(),
@@ -55,6 +46,24 @@ class ServiceController extends AbstractService
         if ($data['provided-for'] !== 'anonymous') { $this->auth->generate_api_token($_SERVER['HTTP_X-GLUED-AUTH-UUID']); }
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
+*/
+
+
+    public function getHealth(Request $request, Response $response, array $args = []): Response
+    {
+        try {
+            $check['service'] = basename(__ROOT__);
+            $check['timestamp'] = microtime();
+            $check['healthy'] = true;
+            $check['status']['postgres'] = $this->pg->query("select true as test")->fetch()['test'] ?? false;
+            $check['status']['auth'] = $_SERVER; // $_SERVER['X-GLUED-AUTH-UUID'] ?? 'anonymous';
+        } catch (\Exception $e) {
+            $check['healthy'] = false;
+            return $response->withJson($check);
+        }
+        return $response->withJson($check);
+    }
+
 
     /**
      * Returns /api home response.
@@ -65,26 +74,14 @@ class ServiceController extends AbstractService
      */
     public function home(Request $request, Response $response, array $args = []): Response {
         $data = [
-            'message' => 'Welcome! Follow to the Uri in details to obtain a list of available routes.',
-            'details' => $this->settings['glued']['protocol'].$this->settings['glued']['hostname'].$this->routecollector->getRouteParser()->UrlFor('be_core_routes'),
+            'message' => 'Hello! Welcome to the API ingress route.',
+            'routes' => $this->settings['glued']['baseuri'].$this->routecollector->getRouteParser()->UrlFor('be_core_routes'),
+            'health' => $this->settings['glued']['baseuri'].$this->routecollector->getRouteParser()->UrlFor('be_core_health'),
             'status' => 'OK'
         ];
         return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
     }
 
-    public function apidocs(Request $request, Response $response, array $args = []): Response {
-        $data = [];
-        $openapis = array_filter($this->settings['routes'], function ($route) {
-            return isset($route['provides']) && $route['provides'] === 'openapi';
-        });
-        foreach ($openapis as $route) {
-            $data[] = [
-                'url' => "{$this->settings['glued']['protocol']}{$this->settings['glued']['hostname']}{$route['pattern']}",
-                'name' => $route['label']
-                ];
-        }
-        return $response->withJson($data, options: JSON_UNESCAPED_SLASHES);
-    }
 
 
 

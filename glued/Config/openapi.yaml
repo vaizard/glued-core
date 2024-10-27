@@ -31,14 +31,25 @@ paths:
           description: Ok
         '403':
           description: Forbidden
+  /internal/auth/health:
+    x-glued-pathname: internal_auth_health
+    x-glued-provides: health
+    get:
+      x-glued-method: Glued\Controllers\AuthProxyController:health
+      summary: Authorization health status
+      description: Status of the authorization proxy
+      operationId: InternalAuthProxyHealth
+      responses:
+        '200':
+          description: Ok
   /internal/auth/challenge:
     x-glued-pathname: internal_auth_challenge
     x-glued-provides: internal
     get:
-      x-glued-method: Glued\Controllers\AuthController:enforce
+      x-glued-method: Glued\Controllers\AuthProxyController:challenge
       summary: Authorization enforcer
       description: Authorizes user for the action (crud) on a resource (uri). Returns 200 or 403 as expected by the nginx auth_request_module.
-      operationId: InternalAuthChallenge
+      operationId: InternalAuthProxyChallenge
       responses:
         '200':
           description: Authorized
@@ -74,10 +85,10 @@ paths:
     x-glued-pathname: be_core_health
     x-glued-provides: health
     get:
-      x-glued-method: Glued\Controllers\ServiceController:health
+      x-glued-method: Glued\Controllers\ServiceController:getHealth
       summary: Healthcheck
       description: A healthcheck endpoint.
-      operationId: CoreHealth
+      operationId: CoreGetHealth
       responses:
         '200':
           description: Ok
