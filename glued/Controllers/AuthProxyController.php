@@ -3,7 +3,6 @@
 namespace Glued\Controllers;
 
 use Jose\Component\Core\JWK;
-use mysql_xdevapi\Exception;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Glued\Lib\Controllers\AbstractBlank;

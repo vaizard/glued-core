@@ -1,6 +1,7 @@
 # glued-core
 Core microservice for Glued
 
+
 ```
 # Prereqs
 sudo apt update
@@ -21,9 +22,9 @@ curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmo
 curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
 curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
 
-sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql-archive-keyring.gpg
-
+sudo install -d /usr/share/postgresql-common/pgdg
+sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 
 
 # base
@@ -41,9 +42,9 @@ echo "extension=sqlsrv.so" > /etc/php/$(php --ini | grep Loaded | cut -d'/' -f4)
 phpenmod pdo_sqlsrv
 phpenmod sqlsrv
 echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
-sudo sed -i '/^#.*local\s*all\s*all\s*peer/b; /local\s*all\s*all\s*peer/s/^/#/' /etc/postgresql/16/main/pg_hba.conf
-grep -q "local\s*all\s*all\s*scram-sha-256" /etc/postgresql/16/main/pg_hba.conf || echo "local   all   all   scram-sha-256" | sudo tee -a /etc/postgresql/16/main/pg_hba.conf
-grep -q "host\s*all\s*all\s*all\s*scram-sha-256" /etc/postgresql/16/main/pg_hba.conf || echo "host    all   all   all   scram-sha-256" | sudo tee -a /etc/postgresql/16/main/pg_hba.conf
+sudo sed -i '/^#.*local\s*all\s*all\s*peer/b; /local\s*all\s*all\s*peer/s/^/#/' /etc/postgresql/17/main/pg_hba.conf
+grep -q "local\s*all\s*all\s*scram-sha-256" /etc/postgresql/17/main/pg_hba.conf || echo "local   all   all   scram-sha-256" | sudo tee -a /etc/postgresql/17/main/pg_hba.conf
+grep -q "host\s*all\s*all\s*all\s*scram-sha-256" /etc/postgresql/17/main/pg_hba.conf || echo "host    all   all   all   scram-sha-256" | sudo tee -a /etc/postgresql/17/main/pg_hba.conf
 
 
 # tools
