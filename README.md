@@ -96,7 +96,8 @@ modify the script above. What you end with is
 
 - all dependencies setup
 - glued-core installed in /var/www/html/glued-core
-- nginx configured to use glued-core as the default server responding to https://glued (using a self-signed certificate)
+- nginx configured to use glued-core as the default server responding to https://glued (using a self-signed certificate). Additionally, https://openapi.glued will be accessible too. Make sure to setup your DNS.
+- make sure to set up correct 
 
 ## Installing additional services
 
