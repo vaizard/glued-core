@@ -2,13 +2,72 @@
 
 namespace Glued\Controllers;
 
-use Jose\Component\Core\JWK;
+use Glued\Lib\JWT;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Glued\Lib\Controllers\AbstractBlank;
 
+
 class AuthProxyController extends AbstractBlank
 {
+    protected $jwt;
+
+    public function __construct(ContainerInterface $container)
+    {
+        parent::__construct($container);
+        $this->jwt = new JWT($this->settings['oidc'], $this->fscache, $this->utils);
+    }
+
+    public function health(Request $request, Response $response, array $args = []): Response
+    {
+        $authProxyConfig = $this->settings['oidc'];
+        $oidcConfiguration = $this->jwt->fetchOidcConfiguration($authProxyConfig);
+        $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
+        $oidcJwk = $this->jwt->processOidcJwks($oidcJwks);
+        try {
+            $rawToken = $this->jwt->fetchToken($request);
+            $this->jwt->parseToken($rawToken, $oidcJwk);
+            $claims = $this->jwt->getJwtClaims();
+            $headers = $this->jwt->getJwtClaims();
+            $signatures = $this->jwt->getSignaturesCount();
+            $jwkSet = $this->jwt->getJwkSet();
+            $underlyingJws = $this->jwt->getJws();
+            $this->jwt->validateToken();
+        } catch (\Exception $e) {
+            $exception = [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ];
+            $responseCode = 401;
+        }
+
+        $ret = [
+            'authProxyConfig' => $authProxyConfig,
+            'oidcConfiguration' => $oidcConfiguration,
+            'oidcJwks' => $oidcJwks,
+            'oicdJwk' => $oidcJwk,
+            'rawToken' => $rawToken ?? '',
+            'parsedTokenClaims' => $claims ?? '',
+            'parsedTokenHeaders' => $headers ?? '',
+        ];
+
+        if ($exception ?? false) {
+            $ret['exception'] = $exception;
+        }
+
+        $ret['glued'] = [
+            'X-GLUED-AUTH-UUID' => $claims['sub'] ?? '00000000-0000-0000-0000-000000000000',
+            'X-GLUED-AUTH-URI' => false,
+            'X-GLUED-AUTH-METHOD' => false,
+            'HTTP_X_ORIGINAL_URI' => $_SERVER['HTTP_X_ORIGINAL_URI'] ?? false,
+            'HTTP_X_ORIGINAL_METHOD' => $_SERVER['HTTP_X_ORIGINAL_METHOD'] ?? false
+        ];
+
+        return $response->withJson($ret, options: JSON_UNESCAPED_SLASHES)->withStatus($responseCode ?? 200);
+    }
 
     /**
      * Provides an authentication and authorization endpoint for the nginx auth subrequest.
@@ -20,114 +79,8 @@ class AuthProxyController extends AbstractBlank
      *                  X_GLUED_AUTH_UUID and X_GLUED_MESSAGE can be set as well.
      */
 
-    public function oidcDiscovery(): array
-    {
-        $oidc = $this->settings['oidc'];
-        $cacheKey = 'coreAuthOidcDiscovery';
-
-        // Attempt to retrieve cached discovery data
-        $res = $this->fscache->has($cacheKey)
-            ? json_decode($this->fscache->get($cacheKey), true) ?? []
-            : [];
-
-        // If cache is empty or issuer doesn't match, fetch fresh data
-        if (empty($res) || ($res['issuer'] ?? null) !== $oidc['issuer']) {
-            $json = $this->utils->fetch_uri($oidc['discovery']) ?? '';
-            $res = json_decode($json, true);
-            if (empty($res)) { throw new \Exception("Identity server discovery {$oidc['discovery']} failed.", 502); }
-            if (($res['issuer'] ?? null) !== $oidc['issuer']) { throw new \Exception("Configured OIDC issuer {$oidc['discovery']} doesn't match discovered issuer ({$res['issuer']}).", 500); }
-            $this->fscache->set($cacheKey, $json, $oidc['ttl']); // Cache the new discovery data
-        }
-
-        return $res;
-    }
-
-
-    public function oidcJwks($jwksUri): array
-    {
-        $oidc = $this->settings['oidc'];
-        $cacheKey = 'coreAuthOidcJwks';
-
-        // Attempt to retrieve cached JWKS data
-        $jwks = $this->fscache->has($cacheKey)
-            ? json_decode($this->fscache->get($cacheKey), true) ?? []
-            : [];
-
-        // If cache is empty or 'keys' not found, fetch fresh data
-        if (empty($jwks) || !isset($jwks['keys'])) {
-            $json = $this->utils->fetch_uri($jwksUri) ?? '';
-            $jwks = json_decode($json, true) ?? [];
-            if (empty($jwks)) { throw new \Exception("Identity server returned empty Jwks response `{$jwksUri}`.", 502); }
-            if (!isset($jwks['keys'])) { throw new \Exception("Identity server failed to return Jwks certificates.", 502); }
-            $this->fscache->set($cacheKey, $json, $oidc['ttl']); // Cache the new discovery data
-        }
-
-        return $jwks;
-    }
-
-    public function oidcJwk($oidcJwks)
-    {
-        $oicdJwk = [];
-        foreach ($oidcJwks['keys'] as $item) {
-            $item = (array) $item;
-            if ($item['use'] === 'sig') { $oicdJwk[] = new JWK($item); }
-        }
-        return $oicdJwk;
-    }
-
-    public function fetchToken($request)
-    {
-        $oidc = $this->settings['oidc'];
-
-        // Check for token in header and in the cookie
-        $header = $request->getHeaderLine($oidc['header']);
-        if (!empty($header) && preg_match($oidc['regexp'], $header, $matches)) {
-            return $matches[1];
-        }
-
-        $cookie = $request->getCookieParams()[$oidc['cookie']] ?? null;
-        if ($cookie && preg_match($oidc['regexp'], $cookie, $matches)) {
-            return $matches[1];
-        }
-
-        if ($cookie) {
-            return $cookie;
-        }
-
-        throw new \Exception("Token not found.", 401);
-    }
-
-
-    public function health(Request $request, Response $response, array $args = []): Response
-    {
-        $authProxyConfig = $this->settings['oidc'];
-        $oidcDiscovery = $this->oidcDiscovery();
-        $oidcJwks = $this->oidcJwks($oidcDiscovery['jwks_uri']);
-        $oidcJwk = $this->oidcJwk($oidcJwks);
-        try { $rawToken = $this->fetchToken($request); } catch (\Exception $e) { $rawToken = $e->getMessage(); }
-
-
-        //$certs = $this->getJwks($oidc);
-        //$certs = $this->getJwks('https://glued');
-        //$rawToken = $this->auth->fetch_token($request);
-        //$parsedToken = $this->auth->validate_jwt_token($rawToken, $certs);
-        //$arr['users'] = $this->auth->users();
-        $ret = [
-            'authProxyConfig' => $authProxyConfig,
-            'oidcDiscovery' => $oidcDiscovery,
-            'oidcJwks' => $oidcJwks,
-            'oicdJwk' => $oidcJwk,
-            'token' => $rawToken,
-            //'parsedToken' => $parsedToken,
-        ];
-        return $response->withJson($ret, options: JSON_UNESCAPED_SLASHES);
-    }
-
-
     public function challenge(Request $request, Response $response, array $args = []): Response
-    {
-        //$a = $this->getJwks('https://glued');
-        // debug logging
+    {// debug logging
         $rayId = microtime(true);
         $this->logger->debug("{$rayId} authChallengeResponse", [
             "HTTP_X_ORIGINAL_URI" => $_SERVER['HTTP_X_ORIGINAL_URI'] ?? 'undef',
@@ -151,7 +104,6 @@ class AuthProxyController extends AbstractBlank
                 ->withHeader('Content-Length', 0)
                 ->withHeader('X_GLUED_MESSAGE', '200 OK (options).');
         }
-
 
         return $response->withStatus(200)
             ->withHeader('Content-Length', 0)
