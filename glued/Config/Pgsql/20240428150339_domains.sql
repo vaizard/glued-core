@@ -1,13 +1,14 @@
 -- migrate:up
 
-CREATE TABLE core_domains (
-    uuid UUID GENERATED ALWAYS AS ((doc->>'uuid')::UUID) STORED PRIMARY KEY,
-    doc JSONB DEFAULT NULL,
+CREATE TABLE "glued"."core_domains" (
+    uuid uuid generated always as (((doc->>'uuid'::text))::uuid) stored not null,
+    doc jsonb not null,
+    nonce bytea generated always as (decode(md5((doc - 'uuid')::text), 'hex')) stored,
+    created_by uuid generated always as ((doc->>'createdBy')::uuid) STORED,
+    created_at timestamp default CURRENT_TIMESTAMP,
+    updated_at timestamp default CURRENT_TIMESTAMP,
     name TEXT GENERATED ALWAYS AS ((doc->>'name')) STORED,
-    is_root_domain CHAR(1) GENERATED ALWAYS AS ((doc->>'props.root')) STORED,
-    created_by UUID GENERATED ALWAYS AS ((doc->>'created-by')::UUID) STORED,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    root_domain CHAR(1) GENERATED ALWAYS AS ((doc->>'isRootDomain')) STORED,
     PRIMARY KEY (uuid)
 );
 

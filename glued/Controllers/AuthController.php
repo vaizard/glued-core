@@ -2,13 +2,98 @@
 declare(strict_types=1);
 namespace Glued\Controllers;
 
-use Glued\Lib\QuerySelect;
+use Glued\Classes\QuerySelect;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Glued\Lib\Controllers\AbstractBlank;
 
 class AuthController extends AbstractBlank
 {
+
+    /**
+     * Constructs a SQL query against Glued's standard mysql collections with a minimal set of columns:
+     * c_uuid - binary stored uuid with elements swapped for optimized storage, see `true` in `uuid_to_bin(? , true)`
+     * c_data - the json data blob
+     * c_stor_name - human-readable name for the object when accessed by the stor microservice.
+     * The $qstring (i.e. SELECT) passed by reference will be appended by WHERE clauses constructed according to
+     * $reqparams and $wheremods and finally enveloped by (changed into a subquery of) json_arrayagg().
+     * This allows to return the whole response from mysql as a json string without further transformation of the data
+     * in app logic.
+     * @param array $reqparams (GET) request parameters that are converted them to SQL WHERE clauses
+     * @param QueryBuilder $qstring Base SQL query string (i.e. select) passed as a reference to a QueryBuilder object.
+     * @param array $qparams (GET) request parameter values to be used in WHERE clauses
+     * @param array $wheremods $reqparam WHERE query modifiers. Since the JSON path of the parsed $reqparam vary,
+     * a similar variability needs to be represented in the relevant WHERE query subelements.
+     * @return void
+     */
+    protected function mysqlJsonQueryFromRequest(array $reqparams, QuerySelect &$qstring, &$qparams, array $wheremods = [], string $jsonkey = 'c_data') {
+
+        // define fallback where modifier for the 'uuid' reqparam.
+        if (!array_key_exists('uuid', $wheremods)) {
+            $wheremods['uuid'] = 'c_uuid = uuid_to_bin( ? , true)';
+        }
+
+        foreach ($reqparams as $key => $val) {
+
+            // if request parameter name ($key) doesn't validate, skip to next
+            // foreach item, else replace _ with . in $key to get a valid jsonpath
+            if ($this->reqParamToJsonPath($key) === false) { continue; }
+
+            // to correctly construct the jsonpath, independent on the $key
+            // containing a hypen or not, each $key must be encapsulated with quotes
+            // 'some_hypen-path' -> 'some.hypen-path' -> '"some"."hypen-path"'
+            $jsonpath = '\"'.str_replace('.', '\".\"', $key).'\"';
+            // default where construct that transposes https://server/endpoint?mykey=myval
+            // to sql query substring `where (`c_data`->>'$."mykey"' = ?)`, if $jsonkey is default
+            $w = '('.$jsonkey.'->>"$.'.$jsonpath.'" = ?)';
+
+            foreach ($wheremods as $wmk => $wmv) {
+                if ($key === $wmk) { $w = $wmv; }
+            }
+
+            if (is_array($val)) {
+                foreach ($val as $v) {
+                    $qstring->where($w);
+                    $qparams[] = $v;
+                }
+            } else {
+                $qstring->where($w);
+                $qparams[] = $val;
+            }
+        }
+
+        // envelope in json_arrayagg to return a single row with the complete result
+        $qstring = "select json_arrayagg(res_rows) from ( $qstring ) as res_json";
+    }
+
+    /**
+     * Creates a metadata json header and appends $jsondata to path $.data (if $dataitem is kept default)
+     * $jsondata would be typically acquired from db->rawQuery($qs, $qp) with the $qs and $gp parameters constructed
+     * by mysqlJsonQueryFromRequest. Returns a PSR Response.
+     * @param Response $response
+     * @param array $jsondata
+     * @param string $dataitem
+     * @return Response
+     */
+    public function mysqlJsonResponse(Response $response, array $jsondata = [], string $dataitem = 'data', $meta = []): Response {
+        // construct the response metadata json, remove last character (closing curly bracket)
+        $meta['service']   = basename(__ROOT__);
+        $meta['timestamp'] = microtime();
+        $meta['code']      = 200;
+        $meta['message']   = 'OK';
+        $meta = json_encode($meta, JSON_UNESCAPED_SLASHES);
+        $meta = mb_substr($meta, 0, -1);
+
+        // get the json from a json_arrayagg() response
+        $key = array_keys($jsondata[0])[0];
+        $jsondata = $jsondata[0][$key];
+        if (is_null($jsondata)) { $jsondata = '{}'; }
+
+        // write the response body
+        $body = $response->getBody();
+        $body->write($meta.', "'.$dataitem.'": '.$jsondata."}");
+        return $response->withBody($body)->withStatus(200)->withHeader('Content-Type', 'application/json');
+    }
 
 
     /**
@@ -101,38 +186,6 @@ class AuthController extends AbstractBlank
 
 
 
-
-   /**
-     * Always returns 'pass'. The AuthController::enforce() has a hardcoded 
-     * positive (200) response for the route with AuthController::say_pass() method.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
-     * @return Response Json result set.
-     */
-    public function say_pass(Request $request, Response $response, array $args = []): Response
-    {
-        return $response->withJson([
-            'message' => 'pass',
-            'request' => $request->getMethod()
-        ]);
-    }
-   /**
-     * Always returns 'fail'. The AuthController::enforce() has a hardcoded 
-     * negative (403) response for the route with AuthController::say_fail() method.
-     * @param  Request  $request  
-     * @param  Response $response 
-     * @param  array    $args     
-     * @return Response Json result set.
-     */
-    public function say_fail(Request $request, Response $response, array $args = []): Response {
-        return $response->withJson([
-            'message' => 'Fail: you should never see this message, a 403 error page should emit.',
-            'request' => $request->getMethod()
-        ]);
-    }
-
-
     /**
      * Returns all users (administrative endpoint).
      * TODO minimize the number of authorized users able to see this endpoint.
@@ -157,17 +210,17 @@ class AuthController extends AbstractBlank
                 ) as res_rows
         from `t_core_users`
         EOT;
-        $qs = (new \Glued\Lib\QueryBuilder())->select($qs);
+        $qs = (new \Glued\Classes\QueryBuilder())->select($qs);
         $wm = [
             'handle' => '`c_handle` like ?'
         ];
 
-        $this->utils->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
+        $this->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
         echo vsprintf(str_replace('?', "'%s'", $qs), $qp);
         return $response;
         $res = $this->db->rawQuery($qs, $qp);
         if (true) { $res['debug']['query'] = $this->db->getLastQuery(); }
-        return $this->utils->mysqlJsonResponse($response, $res);
+        return $this->mysqlJsonResponse($response, $res);
         /*return $response->withJson($this->auth->users());*/
     }
 
@@ -192,7 +245,6 @@ class AuthController extends AbstractBlank
     }
 
 
-
     public function tokens_r1(Request $request, Response $response, array $args = []): Response {
         $rp = $request->getQueryParams() ?? [];
         $qs = '
@@ -209,52 +261,12 @@ class AuthController extends AbstractBlank
         ';
         $qp = null;
         $wm = [];
-        $qs = (new \Glued\Lib\QueryBuilder())->select($qs);
-        $this->utils->mysqlJsonQueryFromRequest(reqparams: $rp, qstring: $qs, qparams: $qp, wheremods: $wm, jsonkey: 'tok.c_attr');
+        $qs = (new \Glued\Classes\QueryBuilder())->select($qs);
+        $this->mysqlJsonQueryFromRequest(reqparams: $rp, qstring: $qs, qparams: $qp, wheremods: $wm, jsonkey: 'tok.c_attr');
         $res = $this->db->rawQuery($qs, $qp);
-        return $this->utils->mysqlJsonResponse($response, $res);
+        return $this->mysqlJsonResponse($response, $res);
     }
 
-
-    function mysqlJsonQueryFromRequest(array $reqparams, QuerySelect &$qstring, &$qparams, array $wheremods = []) {
-
-        // define fallback where modifier for the 'uuid' reqparam.
-        if (!array_key_exists('uuid', $wheremods)) {
-            $wheremods['uuid'] = 'c_uuid = uuid_to_bin( ? , true)';
-        }
-
-        foreach ($reqparams as $key => $val) {
-
-            // if request parameter name ($key) doesn't validate, skip to next
-            // foreach item, else replace _ with . in $key to get a valid jsonpath
-            if ($this->reqParamToJsonPath($key) === false) { continue; }
-
-            // to correctly construct the jsonpath, independent on the $key
-            // containing a hypen or not, each $key must be encapsulated with quotes
-            // 'some_hypen-path' -> 'some.hypen-path' -> '"some"."hypen-path"'
-            $jsonpath = '\"'.str_replace('.', '\".\"', $key).'\"';
-            // default where construct that transposes https://server/endpoint?mykey=myval
-            // to sql query substring `where (`c_data`->>'$."mykey"' = ?)`
-            $w = '(`c_data`->>"$.'.$jsonpath.'" = ?)';
-
-            foreach ($wheremods as $wmk => $wmv) {
-                if ($key === $wmk) { $w = $wmv; }
-            }
-
-            if (is_array($val)) {
-                foreach ($val as $v) {
-                    $qstring->where($w);
-                    $qparams[] = $v;
-                }
-            } else {
-                $qstring->where($w);
-                $qparams[] = $val;
-            }
-        }
-
-        // envelope in json_arrayagg to return a single row with the complete result
-        $qstring = "select json_arrayagg(res_rows) from ( $qstring ) as res_json";
-    }
 
 
     public function users_r1(Request $request, Response $response, array $args = []): Response {
@@ -272,17 +284,17 @@ class AuthController extends AbstractBlank
                 ) as res_rows
         from `t_core_users`
         EOT;
-        $qs = (new \Glued\Lib\QueryBuilder())->select($qs);
+        $qs = (new \Glued\Classes\QueryBuilder())->select($qs);
         $wm = [
             'handle' => '`c_handle` like ?'
         ];
 
-        $this->utils->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
+        $this->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
         //echo vsprintf(str_replace('?', "'%s'", $qs), $qp);
         //return $response;
         $res = $this->db->rawQuery($qs, $qp);
         if (true) { $res['debug']['query'] = $this->db->getLastQuery(); }
-        return $this->utils->mysqlJsonResponse($response, $res);
+        return $this->mysqlJsonResponse($response, $res);
         /*return $response->withJson($this->auth->users());*/
     }
 
@@ -351,15 +363,15 @@ class AuthController extends AbstractBlank
         select `c_attr` as res_rows
         from `t_core_domains`
         EOT;
-        $qs = (new \Glued\Lib\QueryBuilder())->select($qs);
+        $qs = (new \Glued\Classes\QueryBuilder())->select($qs);
         $wm = [
             'root' => 'json_contains(`c_json`->>"$._root", ?)',
             'name' => '`c_name` like ?'
         ];
-        $this->utils->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
+        $this->mysqlJsonQueryFromRequest($rp, $qs, $qp, $wm);
         $res = $this->db->rawQuery($qs, $qp);
         if (true) { $res['debug']['query'] = $this->db->getLastQuery(); }
-        return $this->utils->mysqlJsonResponse($response, $res);
+        return $this->mysqlJsonResponse($response, $res);
     }
 
 }

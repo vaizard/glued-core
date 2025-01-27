@@ -122,4 +122,7 @@ Additional services will (if installed as described above)
 Data exposed in /var/www/html/data/*/cache/*yaml (i.e. openapi, routes) are then consumed by glued-core.
 
 
+## Usage
 
+- https://glued/api/core/v1/routes lists all routes
+- https://glued/api/core/v1/openapis lists all openapi specs exposed to glued-core

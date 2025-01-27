@@ -12,28 +12,37 @@ use Glued\Lib\Controllers\AbstractBlank;
 class AuthProxyController extends AbstractBlank
 {
     protected $jwt;
+    /**
+     * @var mixed|void
+     */
+
 
     public function __construct(ContainerInterface $container)
     {
         parent::__construct($container);
-        $this->jwt = new JWT($this->settings['oidc'], $this->fscache, $this->utils);
+        $this->jwt = new JWT($this->settings['oidc'], $this->apcuCache, $this->pg, $this->utils);
     }
 
     public function health(Request $request, Response $response, array $args = []): Response
     {
-        $authProxyConfig = $this->settings['oidc'];
-        $oidcConfiguration = $this->jwt->fetchOidcConfiguration($authProxyConfig);
-        $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
-        $oidcJwk = $this->jwt->processOidcJwks($oidcJwks);
         try {
+            $oidcConfiguration = $this->jwt->fetchOidcConfiguration();
+            $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
+            $oidcJwk = $this->jwt->processOidcJwks($oidcJwks);
             $rawToken = $this->jwt->fetchToken($request);
             $this->jwt->parseToken($rawToken, $oidcJwk);
             $claims = $this->jwt->getJwtClaims();
-            $headers = $this->jwt->getJwtClaims();
+            $headers = $this->jwt->getJwtHeaders();
             $signatures = $this->jwt->getSignaturesCount();
             $jwkSet = $this->jwt->getJwkSet();
             $underlyingJws = $this->jwt->getJws();
             $this->jwt->validateToken();
+            if ($this->apcuCache->get("user_{$claims['sub']}")) {
+                $cached = $this->apcuCache->get("user_{$claims['sub']}");
+            }
+            $stored = $this->jwt->matchToken();
+            $this->apcuCache->set("user_{$claims['sub']}", $stored, 60);
+
         } catch (\Exception $e) {
             $exception = [
                 'message' => $e->getMessage(),
@@ -45,13 +54,15 @@ class AuthProxyController extends AbstractBlank
         }
 
         $ret = [
-            'authProxyConfig' => $authProxyConfig,
+            'authProxyConfig' => $this->settings['oidc'],
             'oidcConfiguration' => $oidcConfiguration,
             'oidcJwks' => $oidcJwks,
             'oicdJwk' => $oidcJwk,
             'rawToken' => $rawToken ?? '',
             'parsedTokenClaims' => $claims ?? '',
             'parsedTokenHeaders' => $headers ?? '',
+            'storedUserData' => $stored ?? '',
+            'cachedUserData' => $cached ?? ''
         ];
 
         if ($exception ?? false) {
@@ -72,6 +83,7 @@ class AuthProxyController extends AbstractBlank
     /**
      * Provides an authentication and authorization endpoint for the nginx auth subrequest.
      * Enforces according to $_SERVER['HTTP_X_ORIGINAL_URI']
+     *
      * @param  Request  $request
      * @param  Response $response
      * @param  array    $args
@@ -80,35 +92,48 @@ class AuthProxyController extends AbstractBlank
      */
 
     public function challenge(Request $request, Response $response, array $args = []): Response
-    {// debug logging
+    {
         $rayId = microtime(true);
-        $this->logger->debug("{$rayId} authChallengeResponse", [
-            "HTTP_X_ORIGINAL_URI" => $_SERVER['HTTP_X_ORIGINAL_URI'] ?? 'undef',
-            "HTTP_X_ORIGINAL_METHOD" => $_SERVER['HTTP_X_ORIGINAL_METHOD'] ?? 'undef'
-        ]);
 
         // Handle server misconfiguration (missing X-ORIGINAL-URI and X-ORIGINAL-METHOD headers)
         if (empty($_SERVER['HTTP_X_ORIGINAL_URI']) || empty($_SERVER['HTTP_X_ORIGINAL_METHOD'])) {
             $this->logger->error("{$rayId} authChallengeResponse: X-ORIGINAL-URI or X-ORIGINAL-METHOD header missing.");
             return $response
-                ->withStatus(403)
+                ->withStatus(200)
+                //->withStatus(401)
                 ->withHeader('Content-Length', 0)
                 ->withHeader('X_GLUED_MESSAGE', '500 Auth backend misconfigured.');
         }
 
         // Skip authorization on OPTIONS requests
         if ($_SERVER['HTTP_X_ORIGINAL_METHOD'] === 'OPTIONS') {
-            $this->logger->debug("{$rayId} authChallengeResponse: OK (options)");
             return $response
                 ->withStatus(200)
                 ->withHeader('Content-Length', 0)
                 ->withHeader('X_GLUED_MESSAGE', '200 OK (options).');
         }
 
+        try {
+            $oidcConfiguration = $this->jwt->fetchOidcConfiguration();
+            $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
+            $oidcJwk = $this->jwt->processOidcJwks($oidcJwks);
+            $rawToken = $this->jwt->fetchToken($request);
+            $this->jwt->parseToken($rawToken, $oidcJwk);
+            $this->jwt->validateToken();
+
+            $claims = $this->jwt->getJwtClaims();
+            $stored = $this->jwt->matchToken();
+        } catch (\Exception $e) {
+            return $response->withStatus(200)
+                ->withHeader('Content-Length', 0)
+                ->withHeader('X-GLUED-MESSAGE', $e->getMessage())
+                ->withHeader('X-GLUED-AUTH-UUID', $claims['sub'] ?? '00000000-0000-0000-0000-000000000000');
+        }
+
         return $response->withStatus(200)
             ->withHeader('Content-Length', 0)
             ->withHeader('X-GLUED-MESSAGE', 'TEST')
-            ->withHeader('X-GLUED-AUTH-UUID', $token['claims']['sub'] ?? '00000000-0000-0000-0000-000000000000');
+            ->withHeader('X-GLUED-AUTH-UUID', $claims['sub'] ?? '00000000-0000-0000-0000-000000000000');
     }
 
     public function enforce2(Request $request, Response $response, array $args = []): Response

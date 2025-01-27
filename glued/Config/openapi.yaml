@@ -11,13 +11,13 @@ paths:
     x-glued-pathname: fe
     x-glued-provides: frontend
     get:
-      x-glued-method: Glued\Controllers\FeController:render_ui
+      x-glued-method: Glued\Controllers\ServiceController:frontendFallback
       summary: Glued
-      description: A react
+      description: A frontend fallback
       operationId: GluedFe
       responses:
-        '200':
-          description: Ok
+        '500':
+          description: Frontend app (glued-react) not configured properly.
   /internal/auth:
     x-glued-pathname: internal_auth
     x-glued-provides: internal
@@ -107,7 +107,7 @@ paths:
     x-glued-pathname: be_core_routes
     x-glued-provides: routes
     get:
-      x-glued-method: Glued\Controllers\ServiceController:routes_list
+      x-glued-method: Glued\Controllers\ServiceController:getRoutes
       summary: Routes
       description: A route list endpoint for the microservice.
       operationId: CoreRoutes
@@ -118,7 +118,7 @@ paths:
     x-glued-pathname: be_core_openapis
     x-glued-provides: service
     get:
-      x-glued-method: Glued\Controllers\ServiceController:apidocs
+      x-glued-method: Glued\Controllers\ServiceController:getOpenapis
       summary: Openapi yamls/jsons
       description: List URIs with Openapi source files
       operationId: CoreOpenAPIs
@@ -209,28 +209,6 @@ paths:
       responses:
         '200':
           description: Ok
-  /api/core/v1/auth/test/pass:
-    x-glued-pathname: be_core_auth_test_pass
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\AuthController:say_pass
-      summary: Auth test / PASS
-      description: Always returns a 200 response code. Intended for testing the nginx auth_request_module.
-      operationId: CoreAuthTestPass
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/auth/test/fail:
-    x-glued-pathname: be_core_auth_test_fail
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\AuthController:say_fail
-      summary: Auth test / FAIL
-      description: Always returns a 403 response code. Intended for testing the nginx auth_request_module.
-      operationId: CoreAuthTestFail
-      responses:
-        '403':
-          description: Forbidden
   /api/core/v1/auth/users:
     x-glued-pathname: be_core_auth_users
     x-glued-provides: service

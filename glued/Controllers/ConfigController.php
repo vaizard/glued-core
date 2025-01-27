@@ -23,16 +23,4 @@ class ConfigController extends AbstractBlank
     }  
 
 
-    /**
-     * Returns server internal state
-     * @param  Request  $request
-     * @param  Response $response
-     * @param  array    $args
-     * @return Response Json result set.
-     */
-    public function phpinfo(Request $request, Response $response, array $args = []): Response {
-        $data = ["message" => "Refer to the adm service, phpinfo route."];
-        return $response->withJson($data);
-    }
-
 }
