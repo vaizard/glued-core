@@ -54,9 +54,9 @@ class AuthProxyController extends AbstractBlank
 
         $ret = [
             'authProxyConfig' => $this->settings['oidc'],
-            'oidcConfiguration' => $oidcConfiguration,
-            'oidcJwks' => $oidcJwks,
-            'oicdJwk' => $oidcJwk,
+            'oidcConfiguration' => $oidcConfiguration ?? false,
+            'oidcJwks' => $oidcJwks ?? false,
+            'oicdJwk' => $oidcJwk ?? false,
             'rawToken' => $rawToken ?? '',
             'parsedTokenClaims' => $claims ?? '',
             'parsedTokenHeaders' => $headers ?? '',
