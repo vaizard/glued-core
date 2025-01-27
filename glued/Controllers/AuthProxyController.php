@@ -93,7 +93,7 @@ class AuthProxyController extends AbstractBlank
     public function challenge(Request $request, Response $response, array $args = []): Response
     {
         $rayId = microtime(true);
-/*
+
         // Handle server misconfiguration (missing X-ORIGINAL-URI and X-ORIGINAL-METHOD headers)
         if (empty($_SERVER['HTTP_X_ORIGINAL_URI']) || empty($_SERVER['HTTP_X_ORIGINAL_METHOD'])) {
             $this->logger->error("{$rayId} authChallengeResponse: X-ORIGINAL-URI or X-ORIGINAL-METHOD header missing.");
@@ -119,16 +119,15 @@ class AuthProxyController extends AbstractBlank
             $rawToken = $this->jwt->fetchToken($request);
             $this->jwt->parseToken($rawToken, $oidcJwk);
             $this->jwt->validateToken();
-
             $claims = $this->jwt->getJwtClaims();
             $stored = $this->jwt->matchToken();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return $response->withStatus(200)
                 ->withHeader('Content-Length', 0)
                 ->withHeader('X-GLUED-MESSAGE', $e->getMessage())
                 ->withHeader('X-GLUED-AUTH-UUID', $claims['sub'] ?? '00000000-0000-0000-0000-000000000000');
         }
-*/
+
         return $response->withStatus(200)
             ->withHeader('Content-Length', 0)
             ->withHeader('X-GLUED-MESSAGE', 'TEST')
