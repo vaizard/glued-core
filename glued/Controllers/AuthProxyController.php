@@ -42,8 +42,7 @@ class AuthProxyController extends AbstractBlank
             }
             $stored = $this->jwt->matchToken();
             $this->apcuCache->set("user_{$claims['sub']}", $stored, 60);
-
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $exception = [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
