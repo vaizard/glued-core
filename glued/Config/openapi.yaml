@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: Glued Core Api
-  description: Core is a authorizing proxy providing ingress to all other Glued services.
+  title: Glued Core API
+  description: Core is an authorizing proxy providing ingress to all other Glued services.
   version: 1.0.0
   x-glued-service: core
 servers:
@@ -12,192 +12,61 @@ paths:
     x-glued-provides: frontend
     get:
       x-glued-method: Glued\Controllers\ServiceController:frontendFallback
-      summary: Glued
-      description: A frontend fallback
+      summary: Frontend Fallback
+      description: "Fallback route for the frontend application when glued-react client won't load properly."
       operationId: GluedFe
       responses:
+        '200':
+          description: Successful response returning HTML content.
+          content:
+            text/html:
+              schema:
+                type: string
         '500':
           description: Frontend app (glued-react) not configured properly.
-  /internal/auth:
-    x-glued-pathname: internal_auth
-    x-glued-provides: internal
-    get:
-      x-glued-method: false
-      summary: Auth subrequest
-      description: Internal auth subrequest proxy to the InternalAuthChallenge operation.
-      operationId: InternalAuth
-      responses:
-        '200':
-          description: Ok
-        '403':
-          description: Forbidden
-  /internal/auth/health:
-    x-glued-pathname: internal_auth_health
-    x-glued-provides: health
-    get:
-      x-glued-method: Glued\Controllers\AuthProxyController:health
-      summary: Authorization health status
-      description: Status of the authorization proxy
-      operationId: InternalAuthProxyHealth
-      responses:
-        '200':
-          description: Ok
-  /internal/auth/challenge:
-    x-glued-pathname: internal_auth_challenge
-    x-glued-provides: internal
-    get:
-      x-glued-method: Glued\Controllers\AuthProxyController:challenge
-      summary: Authorization enforcer
-      description: Authorizes user for the action (crud) on a resource (uri). Returns 200 or 403 as expected by the nginx auth_request_module.
-      operationId: InternalAuthProxyChallenge
-      responses:
-        '200':
-          description: Authorized
-        '403':
-          description: Forbidden
+        default:
+          description: Unexpected error.
   /api:
     x-glued-pathname: be
     x-glued-provides: backend
     get:
       x-glued-method: Glued\Controllers\ServiceController:home
       summary: API Home
-      description: API Home route
+      description: "Landing endpoint for the backend API."
       operationId: GluedBe
       responses:
         '200':
-          description: Ok
+          description: Successful API home response.
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Unexpected error.
   /api/core:
     x-glued-pathname: be_core
     x-glued-provides: openapi
     get:
       x-glued-method: Glued\Controllers\ServiceController:getOpenapi
-      summary: Core OpenApi specs / Ingress
-      description: Core Ingress point. Returns the OpenAPI YAML specification for the Core API.
+      summary: Core OpenAPI Specification
+      description: "Returns the OpenAPI YAML specification for the Core service."
       operationId: CoreIngress
       responses:
         '200':
-          description: Ok
+          description: Successfully retrieved OpenAPI specification.
           content:
             application/yaml:
               schema:
                 type: string
-  /api/core/v1/health:
-    x-glued-pathname: be_core_health
-    x-glued-provides: health
-    get:
-      x-glued-method: Glued\Controllers\ServiceController:getHealth
-      summary: Healthcheck
-      description: A healthcheck endpoint.
-      operationId: CoreGetHealth
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/health/os:
-    x-glued-pathname: be_core_health_os
+        default:
+          description: Unexpected error.
+  /api/core/v1/auth-challenge:
+    x-glued-pathname: be_core_auth_challenge
     x-glued-provides: service
     get:
-      x-glued-method: Glued\Controllers\StatusController:sysinfo
-      summary: OS state
-      description: Returns /proc information from the host.
-      operationId: CoreHealthOs
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/routes:
-    x-glued-pathname: be_core_routes
-    x-glued-provides: routes
-    get:
-      x-glued-method: Glued\Controllers\ServiceController:getRoutes
-      summary: Routes
-      description: A route list endpoint for the microservice.
-      operationId: CoreRoutes
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/openapis:
-    x-glued-pathname: be_core_openapis
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\ServiceController:getOpenapis
-      summary: Openapi yamls/jsons
-      description: List URIs with Openapi source files
-      operationId: CoreOpenAPIs
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/config/glued:
-    x-glued-pathname: be_core_config_glued
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\ConfigController:config
-      summary: Glued configuration
-      description: Returns Glued configuration.
-      operationId: CoreConfigGlued
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/config/php:
-    x-glued-pathname: be_core_config_php
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\ConfigController:phpinfo
-      summary: PHP configuration
-      description: Returns link to phpinfo() output.
-      operationId: CoreConfigPhp
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/env/php:
-    x-glued-pathname: be_core_env_php
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\StatusController:phpconst
-      summary: PHP env
-      description: Returns phpconst().
-      operationId: CoreEnvPhp
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/env/http:
-    x-glued-pathname: be_core_env_http
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\StatusController:server
-      summary: Http server env
-      description: Returns server environment.
-      operationId: CoreEnvHttp
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/env/auth:
-    x-glued-pathname: be_core_env_auth
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\StatusController:auth
-      summary: Authentication status
-      description: Returns the encoded and decoded JWT token along with profile data.
-      operationId: CoreEnvAuth
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/env/request:
-    x-glued-pathname: be_core_env_request
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\StatusController:reflect_request
-      summary: Show request headers
-      description: Returns the client's request headers.
-      operationId: CoreEnvRequest
-      responses:
-        '200':
-          description: Ok
-  /api/core/v1/auth/test/challenge:
-    x-glued-pathname: be_core_auth_test_challenge
-    x-glued-provides: service
-    get:
-      x-glued-method: Glued\Controllers\AuthController:say_status
-      summary: Auth test challenge
-      description: Evaluate a route/method/subject combination against the authorization backend.
+      x-glued-method: Glued\Controllers\AuthController:challenge
+      summary: Authentication Challenge
+      description: "Validates a route/method/subject combination against the authorization backend."
       operationId: CoreAuthTestChallenge
       parameters:
         - name: route
@@ -205,84 +74,522 @@ paths:
           required: true
           schema:
             type: string
-          description: The route parameter, which should be a string.
+          description: "The route to test for authorization."
       responses:
         '200':
-          description: Ok
-  /api/core/v1/auth/users:
-    x-glued-pathname: be_core_auth_users
+          description: Challenge evaluated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Missing or invalid route parameter.
+        '403':
+          description: Authorization failed.
+        default:
+          description: Unexpected error.
+  /api/core/v1/roles:
+    x-glued-pathname: be_core_roles
     x-glued-provides: service
     get:
-      x-glued-method: Glued\Controllers\AuthController:users_r1
-      summary: Manage users
-      description: Api endpoint for managing users.
-      operationId: CoreAuthUsersGet
+      x-glued-method: Glued\Controllers\AuthController:getRoles
+      summary: List Roles
+      description: "Retrieve a list of available roles."
+      operationId: CoreAuthListRoles
       responses:
         '200':
-          description: Ok
+          description: Successfully retrieved list of roles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        default:
+          description: Unexpected error.
     post:
-      x-glued-method: Glued\Controllers\AuthController:users_c1
-      summary: Manage users
-      description: Api endpoint for managing users.
-      operationId: CoreAuthUsersPost
+      x-glued-method: Glued\Controllers\AuthController:postRoles
+      summary: Create Role
+      description: "Create a new role."
+      operationId: CoreAuthCreateRole
+      requestBody:
+        description: Role object to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
-        '200':
-          description: Ok
-  /api/core/v1/auth/tokens:
-    x-glued-pathname: be_core_auth_tokens
+        '201':
+          description: Role created successfully.
+        '400':
+          description: Invalid role data.
+        default:
+          description: Unexpected error.
+  /api/core/v1/roles/{uuid}:
+    x-glued-pathname: be_core_role
     x-glued-provides: service
     get:
-      x-glued-method: Glued\Controllers\AuthController:tokens_r1
-      summary: Manage tokens
-      description: Api endpoint for managing tokens.
-      operationId: CoreAuthTokensGet
+      x-glued-method: Glued\Controllers\AuthController:getRole
+      summary: Get Role
+      description: "Retrieve details for a specific role by UUID."
+      operationId: CoreAuthGetRole
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Unique identifier for the role."
       responses:
         '200':
-          description: Ok
-    post:
-      x-glued-method: Glued\Controllers\AuthController:tokens_c1
-      summary: Manage tokens
-      description: Api endpoint for managing tokens.
-      operationId: CoreAuthTokensPost
+          description: Successfully retrieved role details.
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Role not found.
+        default:
+          description: Unexpected error.
+    patch:
+      x-glued-method: Glued\Controllers\AuthController:patchRole
+      summary: Update Role
+      description: "Update role details for a given UUID."
+      operationId: CoreAuthUpdateRole
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Unique identifier for the role."
+      requestBody:
+        description: Updated role data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         '200':
-          description: Ok
-  /api/core/v1/auth/roles:
-    x-glued-pathname: be_core_auth_roles
+          description: Role updated successfully.
+        '400':
+          description: Invalid data provided.
+        '404':
+          description: Role not found.
+        default:
+          description: Unexpected error.
+  /api/core/v1/pats:
+    x-glued-pathname: be_core_pats_v1
     x-glued-provides: service
     get:
-      x-glued-method: Glued\Controllers\AuthController:roles_r1
-      summary: Manage roles
-      description: Api endpoint for managing roles.
-      operationId: CoreAuthRolesGet
+      x-glued-method: Glued\Controllers\AuthController:getPats
+      summary: List Personal Access Tokens
+      description: "Retrieve a list of personal access tokens."
+      operationId: CoreAuthListPATs
       responses:
         '200':
-          description: Ok
+          description: Successfully retrieved list of PATs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        default:
+          description: Unexpected error.
     post:
-      x-glued-method: Glued\Controllers\AuthController:roles_c1
-      summary: Manage roles
-      description: Api endpoint for managing roles.
-      operationId: CoreAuthRolesPost
+      x-glued-method: Glued\Controllers\AuthController:postPats
+      summary: Create Personal Access Token
+      description: "Generate a new personal access token."
+      operationId: CoreAuthCreatePAT
+      requestBody:
+        description: PAT data for creation.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
-        '200':
-          description: Ok
-  /api/core/v1/auth/domains:
-    x-glued-pathname: be_core_auth_domains
+        '201':
+          description: Personal access token created successfully.
+        '400':
+          description: Invalid token data.
+        default:
+          description: Unexpected error.
+  /api/core/v1/pats/{uuid}:
+    x-glued-pathname: be_core_pat_v1
     x-glued-provides: service
     get:
-      x-glued-method: Glued\Controllers\AuthController:domains_r1
-      summary: Manage domains
-      description: Api endpoint for managing domains.
-      operationId: CoreAuthDomainsGet
+      x-glued-method: Glued\Controllers\AuthController:getPat
+      summary: Get Personal Access Token
+      description: "Retrieve details for a specific personal access token."
+      operationId: CoreAuthGetPAT
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Unique identifier for the personal access token."
       responses:
         '200':
-          description: Ok
+          description: Successfully retrieved PAT details.
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Personal access token not found.
+        default:
+          description: Unexpected error.
+    patch:
+      x-glued-method: Glued\Controllers\AuthController:patchPat
+      summary: Update Personal Access Token
+      description: "Update properties of a personal access token."
+      operationId: CoreAuthUpdatePAT
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Unique identifier for the personal access token."
+      requestBody:
+        description: Updated PAT data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Personal access token updated successfully.
+        '400':
+          description: Invalid data provided.
+        '404':
+          description: Personal access token not found.
+        default:
+          description: Unexpected error.
+  /api/core/v1/users:
+    x-glued-pathname: be_core_users
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:getUsers
+      summary: List Users
+      description: "Retrieve a list of users."
+      operationId: CoreAuthListUsers
+      responses:
+        '200':
+          description: Successfully retrieved list of users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        default:
+          description: Unexpected error.
     post:
-      x-glued-method: Glued\Controllers\AuthController:domains_c1
-      summary: Manage domains
-      description: Api endpoint for managing domains.
-      operationId: CoreAuthDomainsPost
+      x-glued-method: Glued\Controllers\AuthController:postUsers
+      summary: Create User
+      description: "Create a new user."
+      operationId: CoreAuthCreateUser
+      requestBody:
+        description: User data for creation.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: User created successfully.
+        '400':
+          description: Invalid user data.
+        default:
+          description: Unexpected error.
+  /api/core/v1/user/{uuid}:
+    x-glued-pathname: be_core_user
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:getUser
+      summary: Get User
+      description: "Retrieve details for a specific user."
+      operationId: CoreAuthGetUser
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Unique identifier for the user."
       responses:
         '200':
-          description: Ok
-
+          description: Successfully retrieved user details.
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: User not found.
+        default:
+          description: Unexpected error.
+    patch:
+      x-glued-method: Glued\Controllers\AuthController:patchUser
+      summary: Update User
+      description: "Update user information for a given UUID."
+      operationId: CoreAuthUpdateUser
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Unique identifier for the user."
+      requestBody:
+        description: Updated user data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: User updated successfully.
+        '400':
+          description: Invalid data provided.
+        '404':
+          description: User not found.
+        default:
+          description: Unexpected error.
+  /api/core/v1/config:
+    x-glued-pathname: be_core_config_glued
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getConfig
+      summary: Get Glued Configuration
+      description: "Retrieve configuration settings for the Glued service."
+      operationId: CoreConfigGlued
+      responses:
+        '200':
+          description: Successfully retrieved configuration.
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Unexpected error.
+  /api/core/v1/health:
+    x-glued-pathname: be_core_health
+    x-glued-provides: health
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getHealth
+      summary: Health Check
+      description: "Returns the health status of the Core API."
+      operationId: CoreGetHealth
+      responses:
+        '200':
+          description: API is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Unexpected error.
+  /api/core/v1/health/status/auth:
+    x-glued-pathname: be_core_health_status_auth
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:auth
+      summary: Authentication Status
+      description: "Returns the encoded and decoded JWT token along with user profile data."
+      operationId: CoreHealthStatusAuth
+      responses:
+        '200':
+          description: Successfully retrieved authentication status.
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized access.
+        default:
+          description: Unexpected error.
+  /api/core/v1/health/status/http:
+    x-glued-pathname: be_core_health_status_http
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:server
+      summary: HTTP Server Environment
+      description: "Returns details about the HTTP server environment."
+      operationId: CoreHealthStatusHttp
+      responses:
+        '200':
+          description: Successfully retrieved HTTP server environment details.
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Unexpected error.
+  /api/core/v1/health/status/php:
+    x-glued-pathname: be_core_health_status_php
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:phpconst
+      summary: PHP Environment Constants
+      description: "Returns PHP environment constants as defined in phpconst()."
+      operationId: CoreHealthStatusPhp
+      responses:
+        '200':
+          description: Successfully retrieved PHP constants.
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Unexpected error.
+  /api/core/v1/health/status/phpinfo:
+    x-glued-pathname: be_core_health_status_phpinfo
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:phpinfo
+      summary: PHP Information
+      description: "Returns detailed PHP configuration information using phpinfo()."
+      operationId: CoreHealthStatusPhpInfo
+      responses:
+        '200':
+          description: Successfully retrieved PHP information.
+          content:
+            text/html:
+              schema:
+                type: string
+        default:
+          description: Unexpected error.
+  /api/core/v1/health/status/request:
+    x-glued-pathname: be_core_health_status_request
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:reflect_request
+      summary: Request Headers
+      description: "Returns the client's request headers for debugging purposes."
+      operationId: CoreHealthStatusRequest
+      responses:
+        '200':
+          description: Successfully retrieved request headers.
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Unexpected error.
+  /api/core/v1/health/status/sysinfo:
+    x-glued-pathname: be_core_health_status_sysinfo
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\StatusController:sysinfo
+      summary: System Information
+      description: "Returns host system /proc information."
+      operationId: CoreHealthStatusSysinfo
+      responses:
+        '200':
+          description: Successfully retrieved system information.
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Unexpected error.
+  /api/core/v1/openapis:
+    x-glued-pathname: be_core_openapis
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getOpenapis
+      summary: List OpenAPI Specifications
+      description: "Lists URIs that serve available OpenAPI source files."
+      operationId: CoreOpenAPIs
+      responses:
+        '200':
+          description: Successfully retrieved list of OpenAPI specifications.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Unexpected error.
+  /api/core/v1/routes:
+    x-glued-pathname: be_core_routes
+    x-glued-provides: routes
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getRoutes
+      summary: List Routes
+      description: "Returns a list of routes available for the microservice."
+      operationId: CoreRoutes
+      responses:
+        '200':
+          description: Successfully retrieved route list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Unexpected error.
+  /internal/auth:
+    x-glued-pathname: internal_auth
+    x-glued-provides: internal
+    get:
+      x-glued-method: false
+      summary: Internal Auth Subrequest
+      description: "Proxy to the internal authorization challenge endpoint. Not directly accessible."
+      operationId: InternalAuth
+      responses:
+        '200':
+          description: Successful internal auth response.
+        '403':
+          description: Forbidden.
+        '501':
+          description: Not implemented.
+        default:
+          description: Unexpected error.
+  /internal/auth/challenge:
+    x-glued-pathname: internal_auth_challenge
+    x-glued-provides: internal
+    get:
+      x-glued-method: Glued\Controllers\AuthProxyController:challenge
+      summary: Internal Authorization Challenge
+      description: "Authorizes a user for a given action (CRUD) on a resource URI. Returns 200 if authorized or 403 if forbidden."
+      operationId: InternalAuthProxyChallenge
+      responses:
+        '200':
+          description: Authorized.
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          description: Forbidden.
+        default:
+          description: Unexpected error.
+  /internal/auth/health:
+    x-glued-pathname: internal_auth_health
+    x-glued-provides: health
+    get:
+      x-glued-method: Glued\Controllers\AuthProxyController:health
+      summary: Internal Authorization Health
+      description: "Checks the health status of the internal authorization proxy."
+      operationId: InternalAuthProxyHealth
+      responses:
+        '200':
+          description: Internal auth proxy is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Unexpected error.

@@ -1,30 +1,75 @@
 -- migrate:up
 
-CREATE TABLE "glued"."core_pats" (
-    uuid uuid generated always as (((doc->>'uuid'::text))::uuid) stored not null,
-    doc jsonb not null,
-    nonce bytea generated always as (decode(md5((doc - 'uuid')::text), 'hex')) stored,
-    created_at timestamp default CURRENT_TIMESTAMP,
-    updated_at timestamp default CURRENT_TIMESTAMP,
-    expired_at timestamp with time zone GENERATED ALWAYS AS (to_timestamp((doc->>'exp')::double precision)) STORED,
-    token TEXT GENERATED ALWAYS AS ((doc->>'token')) STORED,
-    inherit_from uuid generated always as (((doc->>'inheritUuid'::text))::uuid) stored not null,
-    PRIMARY KEY (uuid),
-    UNIQUE (token)
+-- 1) Drop and recreate the table with the new generated column definition
+--    (only do this if you can afford a destructive change; otherwise use ALTER TABLE).
+DROP TABLE IF EXISTS glued.core_pats CASCADE;
+
+CREATE TABLE glued.core_pats (
+                                 uuid uuid GENERATED ALWAYS AS (((doc->>'uuid')::text)::uuid) STORED NOT NULL,
+                                 doc jsonb NOT NULL,
+                                 nonce bytea GENERATED ALWAYS AS (decode(md5((doc - 'uuid')::text), 'hex')) STORED,
+                                 created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+                                 updated_at timestamp DEFAULT CURRENT_TIMESTAMP,
+                                 expired_at timestamp with time zone GENERATED ALWAYS AS (to_timestamp((doc->>'exp')::double precision)) STORED,
+                                 token text GENERATED ALWAYS AS ((doc->>'token')) STORED,
+    -- change from doc->>'inheritUuid' to doc->'inherit'->>'uuid'
+                                 inherit_uuid uuid GENERATED ALWAYS AS (((doc->'inherit'->>'uuid')::text)::uuid) STORED NOT NULL,
+                                 PRIMARY KEY (uuid),
+                                 UNIQUE (token)
 );
 
-CREATE OR REPLACE VIEW glued.core_pat_details AS
+-- 2) Recreate or replace the view so that it merges u.handle and u.active into doc.inherit
+CREATE OR REPLACE VIEW glued.core_pats_ext AS
 SELECT
-    tok.*,
-    u.username as user_name,
-    u.active as user_active
+    tok.uuid,
+    -- Insert user handle and active status into the doc JSON
+    jsonb_set(
+            jsonb_set(
+                    tok.doc,
+                    '{inherit,handle}',
+                    to_jsonb(u.handle)
+            ),
+            '{inherit,active}',
+            to_jsonb(u.active)
+    ) AS doc,
+    tok.nonce,
+    tok.created_at,
+    tok.updated_at,
+    tok.expired_at,
+    tok.token,
+    tok.inherit_uuid
 FROM glued.core_pats AS tok
-    LEFT JOIN glued.core_users AS u ON tok.inherit_from = u.uuid
+         LEFT JOIN glued.core_users AS u ON tok.inherit_uuid = u.uuid
 WHERE
-    COALESCE(tok.expired_at, NOW() + interval '42 seconds') >= NOW()
-    AND u.active = true;
+    COALESCE(tok.expired_at, now() + interval '42 seconds') >= now()
+  AND u.active = true;
+
+INSERT INTO "glued"."core_pats" (doc)
+VALUES (
+           jsonb_build_object(
+                   'uuid', gen_random_uuid()::text,
+                   'token', replace(
+                           replace(
+                                   trim(trailing '=' from encode(sha256(random()::text::bytea), 'base64')),
+                                   '+', '-'
+                           ),
+                           '/', '_'
+                            ),
+                   'exp', null,
+                   'inherit', jsonb_build_object(
+                           'uuid', (
+                       SELECT doc->>'uuid'
+                       FROM "glued"."core_users"
+                       WHERE handle = 'agent'
+                       LIMIT 1
+                   )
+                              ),
+                   'name', 'System agent''s main PAT'
+           )
+       );
+
 
 -- migrate:down
 
-DROP VIEW core_pat_details;
+DROP VIEW core_pats_ext;
 DROP TABLE IF EXISTS core_pats;

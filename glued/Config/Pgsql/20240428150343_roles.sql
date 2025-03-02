@@ -1,11 +1,12 @@
 -- migrate:up
 
-CREATE TABLE core_roles (
-    uuid UUID NOT NULL DEFAULT gen_random_uuid(),
-    name TEXT DEFAULT NULL,
-    description TEXT DEFAULT NULL,
-    PRIMARY KEY (uuid),
-    UNIQUE (name)
+CREATE TABLE "glued"."core_roles" (
+    uuid uuid generated always as (((doc->>'uuid'::text))::uuid) stored not null,
+    doc jsonb not null,
+    nonce bytea generated always as (decode(md5((doc - 'uuid')::text), 'hex')) stored,
+    created_at timestamp default CURRENT_TIMESTAMP,
+    updated_at timestamp default CURRENT_TIMESTAMP,
+    PRIMARY KEY (uuid)
 );
 
 -- migrate:down

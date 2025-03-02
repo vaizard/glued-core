@@ -159,4 +159,18 @@ class ServiceController extends AbstractService
         return $response->withStatus(500);
     }
 
+    /**
+     * Return complete glued configuration. NOTE that this method must me behind auth.
+     * @param  Request  $request
+     * @param  Response $response
+     * @param  array    $args
+     * @return Response Json result set.
+     */
+    public function getConfig(Request $request, Response $response, array $args = []): Response {
+        return $response->withJson($this->settings, options: JSON_UNESCAPED_SLASHES);
+    }
+
+
+
+
 }

@@ -3,6 +3,7 @@
 namespace Glued\Controllers;
 
 use Glued\Lib\JWT;
+use Glued\Lib\PAT;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -16,15 +17,53 @@ class AuthProxyController extends AbstractBlank
      * @var mixed|void
      */
 
+    protected $pat;
+    /**
+     * @var mixed|void
+     */
 
     public function __construct(ContainerInterface $container)
     {
         parent::__construct($container);
         $this->jwt = new JWT($this->settings['oidc'], $this->apcuCache, $this->pg, $this->utils);
+        $this->pat = new PAT($this->settings, $this->apcuCache, $this->pg, $this->logger);
     }
 
     public function health(Request $request, Response $response, array $args = []): Response
     {
+
+        try {
+            $rawToken = $this->jwt->fetchToken($request); // Fetch Bearer token from Authorization header
+            try {
+                // Try to match the Bearer token as a PAT token
+                $storedPat = $this->pat->matchToken($rawToken); // If succeeds, we're done
+                $claims['sub'] = 'b0324f6e-64b9-463d-9b41-1234567890ab';
+            } catch (\Throwable $patEx) {
+                // If the PAT check fails, attempt JWT logic
+                $ret['exception'][] = $patEx;
+                $oidcConfiguration = $this->jwt->fetchOidcConfiguration();
+                $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
+                $oidcJwk = $this->jwt->processOidcJwks($oidcJwks);
+                $this->jwt->parseToken($rawToken, $oidcJwk);
+                $this->jwt->validateToken();
+                $claims = $this->jwt->getJwtClaims();
+                $storedJwt = $this->jwt->matchToken();
+            }
+/*
+            if (!$stored) {
+                return $this->handle($response, 401, '401 Unauthorized - No valid PAT or JWT token found.');
+            }
+*/
+        } catch (\Throwable $e) {
+            // If fetchToken() or anything else blew up, fail
+            //$this->logger->error("{$rayId} Token processing failed. ".$e->getMessage());
+            // return $this->handle($response, 401, '401 Unauthorized - Token processing failed.');
+            $ret['exception'][] = $e;
+        }
+
+        // If all above is good, you have a valid token
+        //return $this->handle($response, 200, 'Authn OK', $claims['sub'] ?? null);
+/*
         try {
             $oidcConfiguration = $this->jwt->fetchOidcConfiguration();
             $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
@@ -51,7 +90,7 @@ class AuthProxyController extends AbstractBlank
             ];
             $responseCode = 401;
         }
-
+*/
         $ret = [
             'authProxyConfig' => $this->settings['oidc'],
             'oidcConfiguration' => $oidcConfiguration ?? false,
@@ -61,12 +100,12 @@ class AuthProxyController extends AbstractBlank
             'parsedTokenClaims' => $claims ?? '',
             'parsedTokenHeaders' => $headers ?? '',
             'storedUserData' => $stored ?? '',
-            'cachedUserData' => $cached ?? ''
+            'cachedUserData' => $cached ?? '',
+            'storedPAT' => $storedPat ?? '',
+            'storetJWT' => $storedJwt ?? '',
         ];
 
-        if ($exception ?? false) {
-            $ret['exception'] = $exception;
-        }
+
 
         $ret['glued'] = [
             'X-GLUED-AUTH-UUID' => $claims['sub'] ?? '00000000-0000-0000-0000-000000000000',
@@ -77,6 +116,45 @@ class AuthProxyController extends AbstractBlank
         ];
 
         return $response->withJson($ret, options: JSON_UNESCAPED_SLASHES)->withStatus($responseCode ?? 200);
+    }
+
+
+    protected function handle(Response $response, int $status, string $message, ?string $sub = null): Response {
+        return $response
+            ->withStatus($status)
+            ->withHeader('Content-Length', 0)
+            ->withHeader('X-GLUED-MESSAGE', $message)
+            ->withHeader('X-GLUED-AUTH-UUID', $sub ?? '00000000-0000-0000-0000-000000000000');
+    }
+
+    /**
+     * Collects all possible IP addresses the request might have come from.
+     *
+     * @return array An array of IP addresses/headers.
+     */
+    private function gatherAllPossibleIps(): array
+    {
+        $possibleIps = [];
+
+        // The 'standard' IP address
+        if (!empty($_SERVER['REMOTE_ADDR'])) {
+            $possibleIps[] = $_SERVER['REMOTE_ADDR'];
+        }
+
+        // IPs that might come from proxies/load balancers
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            $possibleIps[] = $_SERVER['HTTP_CLIENT_IP'];
+        }
+        if (!empty($_SERVER['HTTP_X_REAL_IP'])) {
+            $possibleIps[] = $_SERVER['HTTP_X_REAL_IP'];
+        }
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            // This may contain a comma-separated list of IPs if multiple proxies were used
+            // Keep it as a single string or split it for further processing.
+            $possibleIps[] = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        }
+
+        return $possibleIps;
     }
 
     /**
@@ -93,45 +171,44 @@ class AuthProxyController extends AbstractBlank
     public function challenge(Request $request, Response $response, array $args = []): Response
     {
         $rayId = microtime(true);
-
-        // Handle server misconfiguration (missing X-ORIGINAL-URI and X-ORIGINAL-METHOD headers)
         if (empty($_SERVER['HTTP_X_ORIGINAL_URI']) || empty($_SERVER['HTTP_X_ORIGINAL_METHOD'])) {
             $this->logger->error("{$rayId} authChallengeResponse: X-ORIGINAL-URI or X-ORIGINAL-METHOD header missing.");
-            return $response
-                ->withStatus(200)
-                //->withStatus(401)
-                ->withHeader('Content-Length', 0)
-                ->withHeader('X_GLUED_MESSAGE', '500 Auth backend misconfigured.');
+            return $this->handle($response, 401, '500 Auth backend misconfigured.');
         }
 
-        // Skip authorization on OPTIONS requests
+        // Skip authorization on OPTIONS
         if ($_SERVER['HTTP_X_ORIGINAL_METHOD'] === 'OPTIONS') {
-            return $response
-                ->withStatus(200)
-                ->withHeader('Content-Length', 0)
-                ->withHeader('X_GLUED_MESSAGE', '200 OK (options).');
+            return $this->handle($response, 200, '200 OK (options).');
         }
 
         try {
-            $oidcConfiguration = $this->jwt->fetchOidcConfiguration();
-            $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
-            $oidcJwk = $this->jwt->processOidcJwks($oidcJwks);
-            $rawToken = $this->jwt->fetchToken($request);
-            $this->jwt->parseToken($rawToken, $oidcJwk);
-            $this->jwt->validateToken();
-            $claims = $this->jwt->getJwtClaims();
-            $stored = $this->jwt->matchToken();
+            $rawToken = $this->jwt->fetchToken($request); // Fetch Bearer token from Authorization header
+            try {
+                // Try to match the Bearer token as a PAT token
+                $stored = $this->pat->matchToken($rawToken); // If succeeds, we're done
+                $claims['sub'] = 'b0324f6e-64b9-463d-9b41-1234567890ab';
+            } catch (\Throwable $patEx) {
+                // If the PAT check fails, attempt JWT logic
+                $oidcConfiguration = $this->jwt->fetchOidcConfiguration();
+                $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
+                $oidcJwk = $this->jwt->processOidcJwks($oidcJwks);
+                $this->jwt->parseToken($rawToken, $oidcJwk);
+                $this->jwt->validateToken();
+                $claims = $this->jwt->getJwtClaims();
+                $stored = $this->jwt->matchToken();
+            }
+            if (!$stored) {
+                $this->logger->error("{$rayId} No valid PAT or JWT token found.");
+                return $this->handle($response, 200, '401 Unauthorized'); // change to 401
+            }
         } catch (\Throwable $e) {
-            return $response->withStatus(200)
-                ->withHeader('Content-Length', 0)
-                ->withHeader('X-GLUED-MESSAGE', $e->getMessage())
-                ->withHeader('X-GLUED-AUTH-UUID', $claims['sub'] ?? '00000000-0000-0000-0000-000000000000');
+            // If fetchToken() or anything else blew up, fail
+            $this->logger->error("{$rayId} Token processing failed. ".$e->getMessage(), [$this->gatherAllPossibleIps()]);
+            return $this->handle($response, 200, '401 Unauthorized'); // change to 401
         }
 
-        return $response->withStatus(200)
-            ->withHeader('Content-Length', 0)
-            ->withHeader('X-GLUED-MESSAGE', 'TEST')
-            ->withHeader('X-GLUED-AUTH-UUID', $claims['sub'] ?? '00000000-0000-0000-0000-000000000000');
+        // If all above is good, you have a valid token
+        return $this->handle($response, 200, 'Authn OK', $claims['sub'] ?? null);
     }
 
     public function enforce2(Request $request, Response $response, array $args = []): Response

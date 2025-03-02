@@ -58,7 +58,9 @@
     "web-token/jwt-framework": "^3",
     "zeuxisoo/slim-whoops": "^0.7",
     "symfony/monolog-bundle": "^3.8",
-    "symfony/console": "^6.4"
+    "symfony/console": "^6.4",
+    "ext-dom": "*",
+    "ext-libxml": "*"
   },
   "require-dev": {
     "ergebnis/composer-normalize": "^2"
