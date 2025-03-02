@@ -1,9 +1,5 @@
 -- migrate:up
 
--- 1) Drop and recreate the table with the new generated column definition
---    (only do this if you can afford a destructive change; otherwise use ALTER TABLE).
-DROP TABLE IF EXISTS glued.core_pats CASCADE;
-
 CREATE TABLE glued.core_pats (
                                  uuid uuid GENERATED ALWAYS AS (((doc->>'uuid')::text)::uuid) STORED NOT NULL,
                                  doc jsonb NOT NULL,
@@ -12,17 +8,14 @@ CREATE TABLE glued.core_pats (
                                  updated_at timestamp DEFAULT CURRENT_TIMESTAMP,
                                  expired_at timestamp with time zone GENERATED ALWAYS AS (to_timestamp((doc->>'exp')::double precision)) STORED,
                                  token text GENERATED ALWAYS AS ((doc->>'token')) STORED,
-    -- change from doc->>'inheritUuid' to doc->'inherit'->>'uuid'
                                  inherit_uuid uuid GENERATED ALWAYS AS (((doc->'inherit'->>'uuid')::text)::uuid) STORED NOT NULL,
                                  PRIMARY KEY (uuid),
                                  UNIQUE (token)
 );
 
--- 2) Recreate or replace the view so that it merges u.handle and u.active into doc.inherit
 CREATE OR REPLACE VIEW glued.core_pats_ext AS
 SELECT
     tok.uuid,
-    -- Insert user handle and active status into the doc JSON
     jsonb_set(
             jsonb_set(
                     tok.doc,
