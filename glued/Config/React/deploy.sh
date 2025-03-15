@@ -4,6 +4,7 @@ pushd ../data
 git clone --depth=1 https://gitlab.com/vaizard/glued-react
 pushd glued-react
 git config --global --add safe.directory $(pwd)
+git stash
 git pull
 ln -s ../../glued-core/.env ./.env
 export $(echo $(cat .env | sed 's/#.*//g'| xargs) | envsubst);
