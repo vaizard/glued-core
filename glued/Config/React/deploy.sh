@@ -17,7 +17,7 @@ echo "REACT_APP_AUTH_CLIENT_ID=\"${REACT_APP_AUTH_CLIENT_ID}\""
 echo "REACT_APP_AUTH_ENDSESSION_ENDPOINT=\"${REACT_APP_AUTH_ENDSESSION_ENDPOINT}\""
 echo "REACT_APP_AUTH_ENDPOINT=\"${REACT_APP_AUTH_ENDPOINT}\""
 echo "CONFIG_NAME=\"${CONFIG_NAME-"dev"}\" npm run build"
-${CONFIG_NAME} npm run build
+CONFIG_NAME=${CONFIG_NAME} npm run build
 cp -r ./build/* ../../glued-core/public
 popd
 popd
