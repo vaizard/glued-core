@@ -32,7 +32,7 @@
     "league/flysystem": "^3",
     "linfo/linfo": "^4",
     "mohammad-waleed/keycloak-admin-client": "^0",
-    "monolog/monolog": "^3",
+    "monolog/monolog": "^3.0",
     "nesbot/carbon": "^2",
     "nyholm/psr7": "^1",
     "nyholm/psr7-server": "*",
@@ -40,7 +40,7 @@
     "php-di/php-di": "^7",
     "php-http/guzzle7-adapter": "^1",
     "psr/http-message": "^1",
-    "psr/log": "^3",
+    "psr/log": "^3.0",
     "phpfastcache/phpfastcache": "^9",
     "ramsey/uuid": "^4",
     "respect/validation": "^2",
@@ -120,14 +120,14 @@
       "vendor/vaizard/glued-lib/src/Scripts/migrate.sh"
     ],
     "nginx": [
-      "patch -s --reject-file=/dev/null -p1 vendor/monolog/monolog/src/Monolog/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch",
+      "[ \"$(uname)\" = \"Linux\" ] && patch -s --reject-file=/dev/null -p1 vendor/monolog/monolog/src/Monolog/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch || (cp vendor/monolog/monolog/src/Monolog/Logger.php /tmp/Logger.php && patch -s --reject-file=/dev/null -p1 /tmp/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch && cp /tmp/Logger.php vendor/monolog/monolog/src/Monolog/Logger.php)",
       "vendor/vaizard/glued-lib/src/Scripts/nginx.sh",
       "Glued\\Lib\\ComposerHooks::generateNginx",
       "vendor/vaizard/glued-lib/src/Scripts/nginx-reload.sh",
       "vendor/vaizard/glued-lib/src/Scripts/php-fpm.sh",
       "Glued\\Lib\\ComposerHooks::generatePHPFPM",
       "vendor/vaizard/glued-lib/src/Scripts/php-fpm-reload.sh",
-      "patch -Rs --reject-file=/dev/null -p1 vendor/monolog/monolog/src/Monolog/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch"
+      "[ \"$(uname)\" = \"Linux\" ] && patch -Rs --reject-file=/dev/null -p1 vendor/monolog/monolog/src/Monolog/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch || (cp vendor/monolog/monolog/src/Monolog/Logger.php /tmp/Logger.php && patch -Rs --reject-file=/dev/null -p1 /tmp/Logger.php < vendor/vaizard/glued-lib/src/Patches/Logger.patch && cp /tmp/Logger.php vendor/monolog/monolog/src/Monolog/Logger.php)"
     ],
     "react": [
       "glued/Config/React/deploy.sh"
