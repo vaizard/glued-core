@@ -4,6 +4,7 @@ namespace Glued\Controllers;
 
 use Glued\Lib\JWT;
 use Glued\Lib\PAT;
+use http\Exception;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -35,12 +36,13 @@ class AuthProxyController extends AbstractBlank
         try {
             $rawToken = $this->jwt->fetchToken($request); // Fetch Bearer token from Authorization header
             try {
-                // Try to match the Bearer token as a PAT token
-                $storedPat = $this->pat->matchToken($rawToken); // If succeeds, we're done
-                $claims['sub'] = 'b0324f6e-64b9-463d-9b41-1234567890ab';
+                // Try to match the Bearer token as a PAT token. On success, construct minimal
+                // $claims, add OICD configuration.
+                $storedPat = $this->pat->matchToken($rawToken);
+                $claims['sub'] = $storedPat['inherit']['uuid'];
             } catch (\Throwable $patEx) {
                 // If the PAT check fails, attempt JWT logic
-                $ret['exception'][] = $patEx;
+                $exception[] = $patEx;
                 $oidcConfiguration = $this->jwt->fetchOidcConfiguration();
                 $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
                 $oidcJwk = $this->jwt->processOidcJwks($oidcJwks);
@@ -49,63 +51,22 @@ class AuthProxyController extends AbstractBlank
                 $claims = $this->jwt->getJwtClaims();
                 $storedJwt = $this->jwt->matchToken();
             }
-/*
-            if (!$stored) {
-                return $this->handle($response, 401, '401 Unauthorized - No valid PAT or JWT token found.');
-            }
-*/
         } catch (\Throwable $e) {
             // If fetchToken() or anything else blew up, fail
-            //$this->logger->error("{$rayId} Token processing failed. ".$e->getMessage());
-            // return $this->handle($response, 401, '401 Unauthorized - Token processing failed.');
-            $ret['exception'][] = $e;
+            $exception[] = $e;
         }
 
-        // If all above is good, you have a valid token
-        //return $this->handle($response, 200, 'Authn OK', $claims['sub'] ?? null);
-/*
-        try {
-            $oidcConfiguration = $this->jwt->fetchOidcConfiguration();
-            $oidcJwks = $this->jwt->fetchOidcJwks($oidcConfiguration['jwks_uri']);
-            $oidcJwk = $this->jwt->processOidcJwks($oidcJwks);
-            $rawToken = $this->jwt->fetchToken($request);
-            $this->jwt->parseToken($rawToken, $oidcJwk);
-            $claims = $this->jwt->getJwtClaims();
-            $headers = $this->jwt->getJwtHeaders();
-            $signatures = $this->jwt->getSignaturesCount();
-            $jwkSet = $this->jwt->getJwkSet();
-            $underlyingJws = $this->jwt->getJws();
-            $this->jwt->validateToken();
-            if ($this->apcuCache->get("user_{$claims['sub']}")) {
-                $cached = $this->apcuCache->get("user_{$claims['sub']}");
-            }
-            $stored = $this->jwt->matchToken();
-            $this->apcuCache->set("user_{$claims['sub']}", $stored, 60);
-        } catch (\Throwable $e) {
-            $exception = [
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ];
-            $responseCode = 401;
-        }
-*/
         $ret = [
             'authProxyConfig' => $this->settings['oidc'],
-            'oidcConfiguration' => $oidcConfiguration ?? false,
-            'oidcJwks' => $oidcJwks ?? false,
-            'oicdJwk' => $oidcJwk ?? false,
+            'oidcConfiguration' => $oidcConfiguration ?? 'No JWT provided.',
+            'oidcJwks' => $oidcJwks ?? 'No JWT provided.',
+            'oicdJwk' => $oidcJwk ?? 'No JWT provided.',
             'rawToken' => $rawToken ?? '',
-            'parsedTokenClaims' => $claims ?? '',
-            'parsedTokenHeaders' => $headers ?? '',
-            'storedUserData' => $stored ?? '',
-            'cachedUserData' => $cached ?? '',
+            'parsedToken' => $claims ?? '',
             'storedPAT' => $storedPat ?? '',
-            'storetJWT' => $storedJwt ?? '',
+            'storedJWT' => $storedJwt ?? '',
+            'exception' => $exception ?? [],
         ];
-
-
 
         $ret['glued'] = [
             'X-GLUED-AUTH-UUID' => $claims['sub'] ?? '00000000-0000-0000-0000-000000000000',
@@ -184,9 +145,9 @@ class AuthProxyController extends AbstractBlank
         try {
             $rawToken = $this->jwt->fetchToken($request); // Fetch Bearer token from Authorization header
             try {
-                // Try to match the Bearer token as a PAT token
+                // Try to match the Bearer token against known PAT tokens
                 $stored = $this->pat->matchToken($rawToken); // If succeeds, we're done
-                $claims['sub'] = 'b0324f6e-64b9-463d-9b41-1234567890ab';
+                $claims['sub'] = $stored['inherit']['uuid'];
             } catch (\Throwable $patEx) {
                 // If the PAT check fails, attempt JWT logic
                 $oidcConfiguration = $this->jwt->fetchOidcConfiguration();
@@ -195,6 +156,7 @@ class AuthProxyController extends AbstractBlank
                 $this->jwt->parseToken($rawToken, $oidcJwk);
                 $this->jwt->validateToken();
                 $claims = $this->jwt->getJwtClaims();
+                // Try to match the Bearer token against known JWT subjects
                 $stored = $this->jwt->matchToken();
             }
             if (!$stored) {

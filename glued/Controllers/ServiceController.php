@@ -42,7 +42,9 @@ class ServiceController extends AbstractService
             $check['timestamp'] = microtime();
             $check['healthy'] = true;
             $check['status']['postgres'] = $this->pg->query("select true as test")->fetch()['test'] ?? false;
-            $check['status']['auth'] = $_SERVER; // $_SERVER['X-GLUED-AUTH-UUID'] ?? 'anonymous';
+            $check['status']['auth'] = array_filter($_SERVER, function($key) {
+                return strpos($key, 'HTTP_X') === 0;
+            }, ARRAY_FILTER_USE_KEY);
         } catch (\Exception $e) {
             $check['healthy'] = false;
             return $response->withJson($check);

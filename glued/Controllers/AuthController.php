@@ -122,7 +122,7 @@ class AuthController extends ServiceController
         return $response->withJson($new);
     }
 
-
+    // TODO rework this
     /**
      * Return the authentication challenge response. Supported query parameters are `route` (mandatory)
      * and `user` (optional user UUID). If `user` is not set, `user` UUID will be deduced from the authentication

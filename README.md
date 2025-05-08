@@ -35,7 +35,20 @@ sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/rele
 sudo chmod +x /usr/local/bin/dbmate
 
 # Install mssql support
-ACCEPT_EULA=Y apt install -y msodbcsql18 mssql-tools18 unixodbc-dev php-pear php-dev
+if ! [[ "18.04 20.04 22.04 24.04" == *"$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2)"* ]];
+then
+    echo "Ubuntu $(grep VERSION_ID /etc/os-release | cut -d '"' -f 2) is not currently supported.";
+    exit;
+fi
+curl -sSL -O https://packages.microsoft.com/config/ubuntu/$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2)/packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+sudo apt-get update
+sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
+sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18
+echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
+source ~/.bashrc
+sudo apt-get install -y unixodbc-dev
 pecl update-channels
 pecl upgrade sqlsrv pdo_sqlsrv
 echo "extension=pdo_sqlsrv.so" > /etc/php/$(php --ini | grep Loaded | cut -d'/' -f4)/mods-available/pdo_sqlsrv.ini
