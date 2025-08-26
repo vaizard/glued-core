@@ -87,13 +87,15 @@
     }
   },
   "scripts": {
+    "deploy": [
+      "composer update",
+      "composer migrate"
+    ],
     "post-install-cmd": [
-      "composer migrate",
       "composer configure || echo \"[FAIL] Failed to configure glued. Please make sure all env variables are set. Rerun composer configure.\"",
       "echo \"Run 'composer nginx' manually to pick restart this microservice\""
     ],
     "post-update-cmd": [
-      "composer migrate",
       "composer configure || echo \"[FAIL] Failed to configure glued. Please make sure all env variables are set. Rerun composer configure.\"",
       "echo \"Run 'composer nginx' manually to pick restart this microservice\""
     ],
