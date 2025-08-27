@@ -112,9 +112,8 @@ server {
 
         include snippets/server/generated_openapi_name.conf;
         root /var/www/html/glued-core/public/openapi-ui;
-        listen 443 ssl;
-        listen [::]:443 ssl;
-        http2 on;
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
         include snippets/common/location-deny.conf;
 }
 
