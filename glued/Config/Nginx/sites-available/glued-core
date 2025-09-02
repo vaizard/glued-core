@@ -14,9 +14,10 @@ server {
         more_clear_input_headers 'X-GLUED-*';
 
         more_set_headers 'Access-Control-Allow-Origin: *';
-        root $glued_base/glued-core/public;
-        listen 443 ssl http2 default_server;
-        listen [::]:443 ssl http2 default_server;
+        root $appbase/glued-core/public;
+        listen 443 ssl default_server;
+        listen [::]:443 ssl default_server;
+        http2 on;
         include snippets/server/common.conf;
 
         ##########################
@@ -111,9 +112,10 @@ server {
         ##########################
 
         include snippets/server/generated_openapi_name.conf;
-        root $glued_base/glued-core/public/openapi-ui;
-        listen 443 ssl http2;
-        listen [::]:443 ssl http2;
+        root $appbase/glued-core/public/openapi-ui;
+        listen 443 ssl;
+        listen [::]:443 ssl;
+        http2 on;
         include snippets/common/location-deny.conf;
 }
 
