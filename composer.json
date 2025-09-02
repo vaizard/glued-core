@@ -51,7 +51,6 @@
     "symfony/config": "^6",
     "symfony/mailer": "^6",
     "symfony/yaml": "^6",
-    "thingengineer/mysqli-database-class": "dev-master#42116651a88b57b03fd967bc57dd38f5094565d9",
     "vaizard/glued-lib": "dev-main",
     "vlucas/phpdotenv": "^5",
     "voku/anti-xss": "^4",
@@ -65,13 +64,6 @@
   "require-dev": {
     "ergebnis/composer-normalize": "^2"
   },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/ThingEngineer/PHP-MySQLi-Database-Class",
-      "no-api": true
-    }
-  ],
   "minimum-stability": "beta",
   "prefer-stable": true,
   "autoload": {
