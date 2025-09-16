@@ -2,27 +2,27 @@
 
 -- 1) real table renamed to core_casbin
 CREATE TABLE IF NOT EXISTS core_casbin (
-                                           id   BIGSERIAL PRIMARY KEY,
-                                           ptype VARCHAR(255) NOT NULL,
-                                           v0    VARCHAR(255),
-                                           v1    VARCHAR(255),
-                                           v2    VARCHAR(255),
-                                           v3    VARCHAR(255),
-                                           v4    VARCHAR(255),
-                                           v5    VARCHAR(255),
-                                           hash  TEXT GENERATED ALWAYS AS (
-                                               md5(
-                                                       ptype  || '.' ||
-                                                       COALESCE(v0,'') || '.' ||
-                                                       COALESCE(v1,'') || '.' ||
-                                                       COALESCE(v2,'') || '.' ||
-                                                       COALESCE(v3,'') || '.' ||
-                                                       COALESCE(v4,'') || '.' ||
-                                                       COALESCE(v5,'')
-                                               )
-                                               ) STORED,
-                                           doc   JSONB DEFAULT '{}'::jsonb NOT NULL,
-                                           UNIQUE(hash)
+   id   BIGSERIAL PRIMARY KEY,
+   ptype VARCHAR(255) NOT NULL,
+   v0    VARCHAR(255),
+   v1    VARCHAR(255),
+   v2    VARCHAR(255),
+   v3    VARCHAR(255),
+   v4    VARCHAR(255),
+   v5    VARCHAR(255),
+   hash  TEXT GENERATED ALWAYS AS (
+       md5(
+               ptype  || '.' ||
+               COALESCE(v0,'') || '.' ||
+               COALESCE(v1,'') || '.' ||
+               COALESCE(v2,'') || '.' ||
+               COALESCE(v3,'') || '.' ||
+               COALESCE(v4,'') || '.' ||
+               COALESCE(v5,'')
+       )
+       ) STORED,
+   doc   JSONB DEFAULT '{}'::jsonb NOT NULL,
+   UNIQUE(hash)
 );
 
 -- 2) view under the old name

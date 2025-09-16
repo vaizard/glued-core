@@ -1,6 +1,6 @@
 -- migrate:up
 
-CREATE TABLE glued.core_pats (
+CREATE TABLE core_pats (
                                  uuid uuid GENERATED ALWAYS AS (((doc->>'uuid')::text)::uuid) STORED NOT NULL,
                                  doc jsonb NOT NULL,
                                  nonce bytea GENERATED ALWAYS AS (decode(md5((doc - 'uuid')::text), 'hex')) STORED,
@@ -13,7 +13,7 @@ CREATE TABLE glued.core_pats (
                                  UNIQUE (token)
 );
 
-CREATE OR REPLACE VIEW glued.core_pats_ext AS
+CREATE OR REPLACE VIEW core_pats_ext AS
 SELECT
     tok.uuid,
     jsonb_set(
@@ -31,13 +31,13 @@ SELECT
     tok.expired_at,
     tok.token,
     tok.inherit_uuid
-FROM glued.core_pats AS tok
-         LEFT JOIN glued.core_users AS u ON tok.inherit_uuid = u.uuid
+FROM core_pats AS tok
+         LEFT JOIN core_users AS u ON tok.inherit_uuid = u.uuid
 WHERE
     COALESCE(tok.expired_at, now() + interval '42 seconds') >= now()
   AND u.active = true;
 
-INSERT INTO "glued"."core_pats" (doc)
+INSERT INTO "core_pats" (doc)
 VALUES (
            jsonb_build_object(
                    'uuid', gen_random_uuid()::text,
@@ -52,7 +52,7 @@ VALUES (
                    'inherit', jsonb_build_object(
                            'uuid', (
                        SELECT doc->>'uuid'
-                       FROM "glued"."core_users"
+                       FROM "core_users"
                        WHERE handle = 'agent'
                        LIMIT 1
                    )

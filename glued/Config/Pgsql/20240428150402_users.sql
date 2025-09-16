@@ -1,6 +1,6 @@
 -- migrate:up
 
-CREATE TABLE "glued"."core_users" (
+CREATE TABLE "core_users" (
     uuid uuid generated always as (((doc->>'uuid'::text))::uuid) stored not null,
     doc jsonb not null,
     nonce bytea generated always as (decode(md5((doc - 'uuid')::text), 'hex')) stored,
@@ -15,7 +15,7 @@ CREATE TABLE "glued"."core_users" (
 
 CREATE INDEX idx_username ON core_users (handle);
 
-INSERT INTO "glued"."core_users" (doc)
+INSERT INTO "core_users" (doc)
 VALUES (
        jsonb_build_object(
                'uuid', gen_random_uuid(),
