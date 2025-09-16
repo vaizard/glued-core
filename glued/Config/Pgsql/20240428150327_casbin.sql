@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS core_casbin (
                                                        COALESCE(v5,'')
                                                )
                                                ) STORED,
+                                           doc   JSONB DEFAULT '{}'::jsonb NOT NULL,
                                            UNIQUE(hash)
 );
 
@@ -31,26 +32,27 @@ SELECT * FROM core_casbin;
 -- 3) INSTEAD OF INSERT trigger function on the view
 CREATE OR REPLACE FUNCTION casbin_rule_view_insert()
     RETURNS TRIGGER AS $$
+DECLARE
+    _h TEXT := md5(
+            NEW.ptype  || '.' ||
+            COALESCE(NEW.v0,'') || '.' ||
+            COALESCE(NEW.v1,'') || '.' ||
+            COALESCE(NEW.v2,'') || '.' ||
+            COALESCE(NEW.v3,'') || '.' ||
+            COALESCE(NEW.v4,'') || '.' ||
+            COALESCE(NEW.v5,'')
+    );
 BEGIN
-    -- only insert into core_casbin if hash not already present
-    IF NOT EXISTS (
-        SELECT 1
-        FROM core_casbin
-        WHERE hash = md5(
-                NEW.ptype  || '.' ||
-                COALESCE(NEW.v0,'') || '.' ||
-                COALESCE(NEW.v1,'') || '.' ||
-                COALESCE(NEW.v2,'') || '.' ||
-                COALESCE(NEW.v3,'') || '.' ||
-                COALESCE(NEW.v4,'') || '.' ||
-                COALESCE(NEW.v5,'')
-                     )
-    ) THEN
-        INSERT INTO core_casbin (ptype, v0, v1, v2, v3, v4, v5)
-        VALUES (NEW.ptype, NEW.v0, NEW.v1, NEW.v2, NEW.v3, NEW.v4, NEW.v5);
+    IF EXISTS (SELECT 1 FROM core_casbin WHERE hash = _h) THEN
+        -- update only the hidden doc column
+        UPDATE core_casbin SET doc = COALESCE(NEW.doc, doc)
+        WHERE hash = _h;
+    ELSE
+        -- insert new row, with NEW.doc (or default {})
+        INSERT INTO core_casbin (ptype, v0, v1, v2, v3, v4, v5, doc)
+        VALUES (NEW.ptype, NEW.v0, NEW.v1, NEW.v2, NEW.v3, NEW.v4, NEW.v5, COALESCE(NEW.doc, '{}'::jsonb));
     END IF;
-    -- swallow result so client sees a “success”
-    RETURN NULL;
+    RETURN NULL;  -- swallow result so clients see “success”
 END;
 $$ LANGUAGE plpgsql;
 
