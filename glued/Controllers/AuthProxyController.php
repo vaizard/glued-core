@@ -2,8 +2,9 @@
 
 namespace Glued\Controllers;
 
-use Glued\Lib\JWT;
-use Glued\Lib\PAT;
+
+use Glued\Lib\Classes\Bearer\JWT;
+use Glued\Lib\Classes\Bearer\PAT;
 use http\Exception;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -173,6 +174,7 @@ class AuthProxyController extends AbstractBlank
         return $this->handle($response, 200, 'Authn OK', $claims['sub'] ?? null);
     }
 
+    /*
     public function enforce2(Request $request, Response $response, array $args = []): Response
     {
 
@@ -265,6 +267,6 @@ class AuthProxyController extends AbstractBlank
         // Fallback authorization response: DENY
         return $response->withStatus(403)->withHeader('Content-Length', 0)->withHeader('X_GLUED_AUTH_UUID', $token['claims']['sub'] ?? '00000000-0000-0000-0000-000000000000');
     }
-
+*/
 
 }
