@@ -60,14 +60,22 @@ paths:
                 type: string
         default:
           description: Unexpected error.
+  /api/core/v1/auth-bootstrap:
+    x-glued-pathname: be_core_auth_bootstrap
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\AuthController:bootstrap
+      summary: Authorization bootstrap
+      description: "Bootstraps authorization"
+      operationId: CoreAuthBootstrap
   /api/core/v1/auth-challenge:
     x-glued-pathname: be_core_auth_challenge
     x-glued-provides: service
     get:
       x-glued-method: Glued\Controllers\AuthController:challenge
-      summary: Authentication Challenge
+      summary: Authorization Challenge
       description: "Validates a route/method/subject combination against the authorization backend."
-      operationId: CoreAuthTestChallenge
+      operationId: CoreAuthChallenge
       parameters:
         - name: route
           in: query
@@ -532,6 +540,25 @@ paths:
       responses:
         '200':
           description: Successfully retrieved route list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Unexpected error.
+  /api/core/v1/discovery:
+    x-glued-pathname: be_core_discovery
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\DiscoveryController:getDiscovery
+      summary: Service discovery
+      description: "Returns a list of routes and the roles that can access their respective methods."
+      operationId: CoreDiscoveryV1
+      responses:
+        '200':
+          description: Successfully retrieved discovery data.
           content:
             application/json:
               schema:
