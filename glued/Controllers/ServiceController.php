@@ -27,6 +27,7 @@ class ServiceController extends AbstractService
     }
 
 
+
     /**
      * This method overrides the `getHealth` method in AbstractService to provide
      * a service-specific health check implementation.

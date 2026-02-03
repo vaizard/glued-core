@@ -310,7 +310,7 @@ class AuthController extends ServiceController
         print_r($x);
         die();
 */
-*/
+
 
         //$routeName = '';
         //$routeParsed = parse_url($route);
