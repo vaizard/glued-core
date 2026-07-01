@@ -42,9 +42,7 @@ class DiscoveryController extends AbstractService
      * Discovery endpoint (PAT only):
      * Lists all applicable roles for each route+method.
      *
-     * roles are currently only:
-     * - anonymous
-     * - users
+     * roles are currently only users; public endpoints return an empty list.
      */
     public function getDiscovery(Request $request, Response $response, array $args = []): Response
     {
@@ -120,18 +118,18 @@ class DiscoveryController extends AbstractService
 
     /**
      * Return all roles applicable for a given route+method.
-     * Today: anonymous + users, later: add Casbin roles here.
+     * Public endpoints return no required roles; authenticated endpoints require users.
      *
      * @return list<string>
      */
     private function rolesForRouteMethod(string $pattern, string $method): array
     {
         if ($method === 'OPTIONS') {
-            return ['anonymous', 'users'];
+            return [];
         }
 
         if ($this->isAnonAllowed($pattern)) {
-            return ['anonymous', 'users']; // logged-in can also use public routes
+            return [];
         }
 
         return ['users'];

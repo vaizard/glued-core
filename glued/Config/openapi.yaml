@@ -548,8 +548,8 @@ paths:
                   type: string
         default:
           description: Unexpected error.
-  /api/core/v1/discovery:
-    x-glued-pathname: be_core_discovery
+  /api/core/v1/autodiscovery:
+    x-glued-pathname: be_core_autodiscovery
     x-glued-provides: service
     get:
       x-glued-method: Glued\Controllers\DiscoveryController:getDiscovery
