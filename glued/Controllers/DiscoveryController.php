@@ -153,6 +153,9 @@ class DiscoveryController extends AbstractService
         $cfg = $this->settings['public_base_url'] ?? null;
         if (is_string($cfg) && $cfg !== '') return rtrim($cfg, '/');
 
+        $baseUri = $this->settings['glued']['baseuri'] ?? null;
+        if (is_string($baseUri) && $baseUri !== '') return rtrim($baseUri, '/');
+
         $uri = $request->getUri();
         $base = $uri->withPath('')->withQuery('')->withFragment('');
         return rtrim((string)$base, '/');
