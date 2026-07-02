@@ -41,14 +41,15 @@ class AuthController extends ServiceController
         $doc = $this->getValidatedRequestBody($request, $response);
         $db = new Sql($this->pg, 'core_users');
         //$this->auditAuthor($db, $request->getHeader('X-glued-auth-uuid')[0]);
-        $res = $db->create((array)$doc, true, true);
-        return $response->withJson($res);
+        $res = $db->create($this->normalizeUserDoc((array)$doc), true, true);
+        return $response->withJson($this->normalizeUserDoc((array)$res));
     }
 
     public function getUsers(Request $request, Response $response, array $args = []): Response
     {
         $db = new Sql($this->pg, 'core_users');
         $res = $db->getAll();
+        $res = array_map(fn($user) => $this->normalizeUserDoc((array)$user), $res);
         return $response->withJson($res);
     }
 
@@ -58,7 +59,7 @@ class AuthController extends ServiceController
         $db = new Sql($this->pg, 'core_users');
         $res = $db->get($args['uuid']);
         if (!$res) { throw new \Exception('User not found', 404); }
-        return $response->withJson($res);
+        return $response->withJson($this->normalizeUserDoc((array)$res));
     }
 
     public function patchUser(Request $request, Response $response, array $args = []): Response
@@ -68,7 +69,46 @@ class AuthController extends ServiceController
         $db = new Sql($this->pg, 'core_users');
         $patch = (object) $this->getValidatedRequestBody($request, $response);
         $new = $db->patch($args['uuid'], $patch);
-        return $response->withJson($new);
+        return $response->withJson($this->normalizeUserDoc((array)$new));
+    }
+
+    private function normalizeUserDoc(array $user): array
+    {
+        $user['profile'] = $user['profile'] ?? [];
+        if (!is_array($user['profile'])) {
+            return $user;
+        }
+
+        $issuer = null;
+        $issuerProfile = null;
+
+        foreach (['claims', 'profile'] as $source) {
+            if (!isset($user[$source]) || !is_array($user[$source])) {
+                continue;
+            }
+
+            foreach ($user[$source] as $key => $value) {
+                if (is_string($key) && filter_var($key, FILTER_VALIDATE_URL) && is_array($value)) {
+                    $issuer = $key;
+                    $issuerProfile = $value;
+                    break 2;
+                }
+            }
+        }
+
+        if ($issuerProfile) {
+            $handle = $issuerProfile['username'] ?? $issuerProfile['preferred_username'] ?? null;
+
+            $user['profile']['name'] = $user['profile']['name'] ?? $issuerProfile['name'] ?? null;
+            $user['profile']['email'] = $user['profile']['email'] ?? $issuerProfile['email'] ?? null;
+            $user['profile']['handle'] = $user['profile']['handle'] ?? $handle;
+
+            $issuerProfile['username'] = $issuerProfile['username'] ?? $handle;
+            $issuerProfile['preferred_username'] = $issuerProfile['preferred_username'] ?? $handle;
+            $user['profile'][$issuer] = $user['profile'][$issuer] ?? $issuerProfile;
+        }
+
+        return $user;
     }
 
     public function postPats(Request $request, Response $response, array $args = []): Response
@@ -356,4 +396,3 @@ class AuthController extends ServiceController
 
 
 }
-
